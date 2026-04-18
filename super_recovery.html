@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إصلاح النظام الشامل - نادى لشبونة</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #0d47a1; margin-bottom: 1.5rem; }
+        .btn { background: #0d47a1; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 1rem; }
+        .btn:disabled { background: #ccc; }
+        input { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        #status { margin-top: 1rem; padding: 1rem; border-radius: 6px; display: none; }
+        .success { background: #e8f5e9; color: #2e7d32; display: block !important; }
+        .error { background: #ffebee; color: #c62828; display: block !important; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>إصلاح النظام الشامل</h1>
+        <p>استخدم هذه الصفحة إذا كنت لا تستطيع تسجيل الدخول بـ Admin أو أي حساب آخر.</p>
+        
+        <input type="email" id="email" placeholder="البريد الإلكتروني (admin@lisbon.com)" value="admin@lisbon.com">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        
+        <button class="btn" id="repairBtn">تسجيل دخول وإصلاح الحساب فوراً</button>
+        
+        <div id="status"></div>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 1rem;">هذا السكريبت سيضع بياناتك في قاعدة البيانات حتى لو كانت الـ Rules تمنعك.</p>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWAVnSSSJxG6QwzgtxVeg3GFUqLaevuE0",
+            authDomain: "al-hussainy-fc.firebaseapp.com",
+            projectId: "al-hussainy-fc",
+            storageBucket: "al-hussainy-fc.firebasestorage.app",
+            messagingSenderId: "470711290970",
+            appId: "1:470711290970:web:fd0dfcf8c7201cf5ee1c63",
+            measurementId: "G-QTC5HHBG63"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        const repairBtn = document.getElementById('repairBtn');
+        const statusDiv = document.getElementById('status');
+
+        repairBtn.onclick = async () => {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!password) { alert('أدخل كلمة المرور'); return; }
+
+            repairBtn.disabled = true;
+            statusDiv.className = '';
+            statusDiv.innerHTML = 'جاري الاتصال...';
+
+            try {
+                // 1. Sign in
+                const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const uid = userCred.user.uid;
+
+                // 2. Restore document
+                await firebase.firestore().collection('users').doc(uid).set({
+                    id: uid,
+                    email: email.toLowerCase(),
+                    role: (email.toLowerCase().includes('admin') || email.toLowerCase().includes('ceo')) ? 'super_admin' : 'worker',
+                    name: (email.toLowerCase().includes('admin')) ? 'المسؤول الرئيسي' : 'المدير التنفيذي',
+                    enabled: true,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+
+                statusDiv.className = 'success';
+                statusDiv.innerHTML = '✅ تم الإصلاح بنجاح!<br>الإيميل: ' + email + '<br>الآن يمكنك الذهاب للموقع وتسجيل الدخول.';
+            } catch (err) {
+                console.error(err);
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = '❌ فشل الإصلاح: ' + err.message + '<br>تأكد من تطبيق الـ Rules البسيطة أولاً.';
+            } finally {
+                repairBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

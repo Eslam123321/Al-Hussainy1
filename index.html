@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نادي لشبونة - نظام إدارة النادي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-header" style="display:flex; flex-direction:column; align-items:center; gap:15px; margin-bottom:25px;">
+        <div style="width:110px; height:110px; border-radius:50%; overflow:hidden; border:4px solid var(--accent, #4f8ef7); box-shadow:0 6px 16px rgba(0,0,0,0.2); background:#fff; display:flex; align-items:center; justify-content:center;">
+          <img src="image/lisbon.jpeg" alt="شعار نادي لشبونة" style="max-width:100%; max-height:100%; object-fit:contain;">
+        </div>
+        <div style="text-align:center;">
+          <h1 style="margin:0; font-size:2.2rem; font-weight:800; letter-spacing:1px;">نادي لشبونة</h1>
+          <p style="margin:5px 0 0; opacity:0.8; font-size:1.1rem;">نظام الإدارة الشامل</p>
+        </div>
+      </div>
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="login-email">البريد الإلكتروني</label>
+          <input type="email" id="login-email" required placeholder="example@club.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="login-password">كلمة المرور</label>
+          <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="form-group role-select">
+          <label>نوع الحساب</label>
+          <div class="role-options">
+            <label class="role-option">
+              <input type="radio" name="login-role" value="worker" checked>
+              <span>الموظف</span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="login-role" value="admin">
+              <span>الإدارة</span>
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">تسجيل الدخول</button>
+        <p id="login-error" class="error-msg" style="display:none;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main App (hidden until logged in) -->
+  <div id="app-shell" class="app-shell" style="display:none;">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header" style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:20px; margin-bottom:15px;">
+        <div style="width:85px; height:85px; border-radius:50%; overflow:hidden; border:2px solid var(--accent, #4f8ef7); box-shadow:0 4px 10px rgba(0,0,0,0.3); background:#fff; display:flex; align-items:center; justify-content:center;">
+          <img src="image/lisbon.jpeg" alt="شعار النادي" style="max-width:100%; max-height:100%; object-fit:contain;">
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
+          <h2 style="margin:0; font-size:1.5rem; letter-spacing:1px; color:#fff;">نادي لشبونة</h2>
+          <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:10px; flex-wrap:wrap;" id="badges-container">
+            <span class="user-badge" id="user-badge" style="font-size:0.85rem; padding:4px 12px; border-radius:20px; margin:0;"></span>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-nav" id="sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <button type="button" class="btn btn-ghost btn-block" id="btn-logout">تسجيل الخروج</button>
+        <button type="button" class="theme-toggle" id="theme-toggle" title="تبديل الوضع">🌓</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="search-wrap">
+          <input type="search" id="global-search" placeholder="بحث..." class="search-input" autocomplete="off">
+        </div>
+        <div class="top-bar-actions" style="display:flex; align-items:center; gap:10px;">
+          <button type="button" class="btn btn-sm" id="global-print" style="padding:5px 10px; font-weight:bold; background:#fff; color:#0d47a1; border:1px solid #0d47a1; border-radius:5px; cursor:pointer; font-family:inherit;">طباعة 🖨️</button>
+          <button type="button" class="btn btn-sm" id="global-export-excel" style="padding:5px 10px; font-weight:bold; background:#2e7d32; color:#fff; border:1px solid #2e7d32; border-radius:5px; cursor:pointer; font-family:inherit;">تصدير Excel 📊</button>
+          <span class="current-page-title" id="page-title" style="margin-right:10px; font-weight:bold;">لوحة التحكم</span>
+        </div>
+      </header>
+      <div class="content-area" id="content-area">
+        <!-- Dynamic content injected here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Access Denied Modal -->
+  <div id="access-denied-overlay" class="overlay" style="display:none;">
+    <div class="modal">
+      <h3>غير مصرح بالوصول</h3>
+      <p>ليس لديك صلاحية لعرض هذه الصفحة.</p>
+      <button type="button" class="btn btn-primary" id="access-denied-close">حسناً</button>
+    </div>
+  </div>
+
+  <!-- Firebase Compat SDK (must load before app scripts) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase config & init -->
+  <script src="js/firebase.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/players.js"></script>
+  <script src="js/coaches.js"></script>
+  <script src="js/employees.js"></script>
+  <script src="js/financial.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

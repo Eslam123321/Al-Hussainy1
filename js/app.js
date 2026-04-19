@@ -144,6 +144,10 @@
         contentArea.innerHTML = renderAccountsPage(searchQ);
         bindAccountsPage();
         break;
+      case ROUTES.BACKUP:
+        contentArea.innerHTML = renderBackupPage();
+        bindBackupPage();
+        break;
       case ROUTES.PASSWORDS:
         contentArea.innerHTML = renderPasswordsPage();
         bindPasswordsPage();
@@ -153,9 +157,13 @@
         bindAttendancePage();
         break;
       default:
-        contentArea.innerHTML = '<div class="card"><p>الصفحة غير متوفرة</p></div>';
+        contentArea.innerHTML = '<div class="empty-state"><h2>الصفحة غير موجودة</h2></div>';
+        break;
     }
   }
+
+  // Expose renderContent globally so real-time Firebase listeners can update the UI
+  window.triggerGlobalRender = renderContent;
 
   function renderDashboard(role) {
     if (!canViewFinancial(role)) {
@@ -331,10 +339,10 @@
     const canExport = canViewFinancial(role);
 
     let html = `<div class="branch-tabs" style="display:flex; gap:10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
-      <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
-      <button type="button" class="btn ${currentListBranch === 'الجيزة' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="الجيزة">الجيزة</button>
-      <button type="button" class="btn ${currentListBranch === 'سوهاج' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="سوهاج">سوهاج</button>
-      <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
+      <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
+      <button type="button" class="btn ${currentListBranch === 'الجيزة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الجيزة">الجيزة</button>
+      <button type="button" class="btn ${currentListBranch === 'سوهاج' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="سوهاج">سوهاج</button>
+      <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
     </div>`;
 
     html += '<div class="export-bar">';
@@ -423,7 +431,7 @@
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-              <button type="button" class="btn btn-ghost btn-cancel-edit">إلغاء</button>
+              <button type="button" class="btn btn-outline btn-cancel-edit">إلغاء</button>
             </div>
           </form>
         </div>
@@ -459,10 +467,10 @@
     const canExport = canViewFinancial(role);
 
     let html = `<div class="branch-tabs" style="display:flex; gap:10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
-      <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
-      <button type="button" class="btn ${currentListBranch === 'الجيزة' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="الجيزة">الجيزة</button>
-      <button type="button" class="btn ${currentListBranch === 'سوهاج' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="سوهاج">سوهاج</button>
-      <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
+      <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
+      <button type="button" class="btn ${currentListBranch === 'الجيزة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الجيزة">الجيزة</button>
+      <button type="button" class="btn ${currentListBranch === 'سوهاج' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="سوهاج">سوهاج</button>
+      <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
     </div>`;
 
     html += '<div class="export-bar">';
@@ -571,7 +579,7 @@
             `}
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-              <button type="button" class="btn btn-ghost btn-cancel-edit">إلغاء</button>
+              <button type="button" class="btn btn-outline btn-cancel-edit">إلغاء</button>
             </div>
           </form>
         </div>
@@ -656,10 +664,10 @@
     const canExport = canViewFinancial(role);
 
     let html = `<div class="branch-tabs" style="display:flex; gap:10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
-      <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
-      <button type="button" class="btn ${currentListBranch === 'الجيزة' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="الجيزة">الجيزة</button>
-      <button type="button" class="btn ${currentListBranch === 'سوهاج' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="سوهاج">سوهاج</button>
-      <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-ghost'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
+      <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
+      <button type="button" class="btn ${currentListBranch === 'الجيزة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الجيزة">الجيزة</button>
+      <button type="button" class="btn ${currentListBranch === 'سوهاج' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="سوهاج">سوهاج</button>
+      <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
     </div>`;
 
     html += '<div class="export-bar">';
@@ -735,7 +743,7 @@
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-              <button type="button" class="btn btn-ghost btn-cancel-edit">إلغاء</button>
+              <button type="button" class="btn btn-outline btn-cancel-edit">إلغاء</button>
             </div>
           </form>
         </div>
@@ -1021,7 +1029,7 @@
             </select></div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">إنشاء الحساب الآن</button>
-              <button type="button" class="btn btn-ghost btn-cancel-create">إلغاء</button>
+              <button type="button" class="btn btn-outline btn-cancel-create">إلغاء</button>
             </div>
           </form>
         </div>
@@ -1153,7 +1161,7 @@
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 class="card-title">فرع ${attendanceCurrentBranch} - اختر الفئة</h3>
-            <button class="btn btn-ghost btn-sm" id="btn-attendance-back-branch">رجوع</button>
+            <button class="btn btn-outline btn-sm" id="btn-attendance-back-branch">رجوع</button>
           </div>
           <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
             <button type="button" class="btn btn-primary btn-attendance-role" data-role="coaches" style="padding:20px 40px; font-size:1.2rem;">الكباتن</button>
@@ -1178,7 +1186,7 @@
           <h3 class="card-title">الحضور والانصراف - فرع ${attendanceCurrentBranch} - ${attendanceCurrentRole === 'coaches' ? 'الكباتن' : 'الموظفين'}</h3>
           <div style="display:flex; align-items:center; gap:10px;">
             <input type="date" id="attendance-date-input" value="${attendanceDate}" style="padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-family:inherit;">
-            <button class="btn btn-ghost btn-sm" id="btn-attendance-back-role">رجوع</button>
+            <button class="btn btn-outline btn-sm" id="btn-attendance-back-role">رجوع</button>
           </div>
         </div>
         <div class="table-wrap" style="margin-top:20px;">

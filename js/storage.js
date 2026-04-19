@@ -27,17 +27,40 @@ function _sanitize(obj) {
   return JSON.parse(JSON.stringify(obj === undefined ? null : obj));
 }
 
+let _unsubscribers = {};
+
 /**
- * Load all documents from a Firestore collection into an array.
+ * Load all documents from a Firestore collection into an array using real-time listener.
+ * This fixes the issue where data doesn't appear until a refresh (due to get() caching).
  */
-async function _loadCollection(name) {
-  try {
-    const snap = await _firestoreDB.collection(name).get();
-    return snap.docs.map(d => ({ ...d.data() }));
-  } catch (e) {
-    console.error('Firestore load error [' + name + ']:', e);
-    return [];
-  }
+function _loadCollection(name) {
+  return new Promise((resolve) => {
+    if (_unsubscribers[name]) {
+      _unsubscribers[name]();
+    }
+    
+    let isFirstLoad = true;
+    _unsubscribers[name] = _firestoreDB.collection(name).onSnapshot((snap) => {
+      const arr = snap.docs.map(d => ({ ...d.data() }));
+      _cache[name] = arr;
+      
+      // Re-render UI magically when data changes remotely or after initial empty cache load
+      if (!isFirstLoad && typeof window.triggerGlobalRender === 'function') {
+        window.triggerGlobalRender();
+      }
+      
+      if (isFirstLoad) {
+        isFirstLoad = false;
+        resolve(arr);
+      }
+    }, (e) => {
+      console.error('Firestore snapshot error [' + name + ']:', e);
+      if (isFirstLoad) {
+        isFirstLoad = false;
+        resolve([]);
+      }
+    });
+  });
 }
 
 /**

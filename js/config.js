@@ -139,8 +139,8 @@ function canCreateSuperAdmin(role) {
   return role === ROLES.SUPER_ADMIN;
 }
 
-/** Session timeout minutes */
-const SESSION_TIMEOUT_MINUTES = 30;
+/** Session timeout minutes — 30 days so users stay logged in on mobile/tablet */
+const SESSION_TIMEOUT_MINUTES = 43200; // 30 days
 
 /** Days before due date to show salary alert */
 const SALARY_ALERT_DAYS = 7;

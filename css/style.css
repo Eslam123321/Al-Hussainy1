@@ -276,6 +276,18 @@ body {
   transition: background var(--transition);
 }
 
+.sidebar-nav .nav-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.sidebar-nav .nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sidebar-nav a:hover {
   background: rgba(255, 255, 255, 0.1);
 }
@@ -608,144 +620,264 @@ table.data-table mark {
   margin-top: 0.5rem;
 }
 
-/* ===== Ultra Professional Responsive Design ===== */
+/* ===== Professional Responsive Design — All Devices ===== */
 
 /* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(13, 71, 161, 0.3);
-  border-radius: 10px;
-}
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(13, 71, 161, 0.6);
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(13, 71, 161, 0.25); border-radius: 10px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
+::-webkit-scrollbar-thumb:hover { background: rgba(13, 71, 161, 0.55); }
+
+/* ── Large Desktop (>1200px) ── */
+@media (min-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .content-area { padding: 2rem; }
 }
 
-/* Tablet (1024px) - Collapsed Sidebar */
+/* ── Tablet Landscape 1024px — Collapsed icon-only sidebar ── */
 @media (max-width: 1024px) {
-  .sidebar { width: 80px; }
-  .sidebar-header h2, .sidebar-header #badges-container, .sidebar-nav a span { display: none; }
-  .sidebar-header { padding: 1.5rem 0.5rem; }
-  .sidebar-header img { width: 45px; height: 45px; }
-  .sidebar-nav a { justify-content: center; padding: 1rem; font-size: 1.3rem; }
-  .sidebar-footer { padding: 1rem 0.5rem; text-align: center; }
-  .sidebar-footer #btn-logout { font-size: 0; padding: 0.5rem; }
-  .sidebar-footer #btn-logout::before { content: "🚪"; font-size: 1.25rem; display:block; }
-  .theme-toggle { font-size: 1.5rem; }
+  .sidebar {
+    width: 72px;
+    overflow: hidden;
+  }
+  .sidebar-header h2,
+  .sidebar-header #badges-container,
+  #user-type-label { display: none !important; }
+  .sidebar-header { padding: 1rem 0; align-items: center; }
+  .sidebar-header div[style] { width: 50px !important; height: 50px !important; }
+  .sidebar-nav a {
+    justify-content: center;
+    padding: 0.9rem 0;
+  }
+  .sidebar-nav .nav-icon { font-size: 1.4rem; display: block; }
+  .sidebar-nav .nav-label { display: none; }
+  .sidebar-footer { padding: 0.75rem 0; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .sidebar-footer #btn-logout {
+    font-size: 0;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+  }
+  .sidebar-footer #btn-logout::before { content: "🚪"; font-size: 1.3rem; display: block; }
+  .theme-toggle { width: auto; padding: 0.5rem; font-size: 1.3rem; }
 }
 
-/* Mobile (768px) - Bottom Navigation & Optimal Layouts */
+/* ── Tablet Portrait 768px ── */
 @media (max-width: 768px) {
+  /* App shell layout */
   .app-shell {
     flex-direction: column;
-    padding-bottom: 75px; /* Space for bottom nav */
+    padding-bottom: 72px;
   }
-  
-  /* Convert Sidebar to an App-like Bottom Navigation */
+
+  /* ─── Bottom Navigation Bar ─── */
   .sidebar {
     position: fixed;
     bottom: 0;
     left: 0;
+    right: 0;
     width: 100%;
-    height: 75px;
+    height: 72px;
     flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    overflow: visible;
     padding: 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    box-shadow: 0 -2px 16px rgba(0,0,0,0.18);
+    z-index: 999;
+    border-top: 1px solid rgba(255,255,255,0.08);
   }
-  .sidebar-header { display: none; }
+
+  /* Hide sidebar chrome — only nav + action icons visible */
+  .sidebar-header { display: none !important; }
+
+  /* Nav items row */
   .sidebar-nav {
     display: flex;
     flex-direction: row;
-    width: 100%;
-    justify-content: space-evenly; /* nice spacing */
     flex: 1;
-    padding: 0;
     overflow-x: auto;
     overflow-y: hidden;
+    padding: 0;
+    scrollbar-width: none;
   }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+
   .sidebar-nav a {
     flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.5rem;
-    font-size: 1.2rem;
-    min-width: 65px;
-    background: transparent !important;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 5px 6px;
+    min-width: 58px;
+    flex-shrink: 0;
+    background: none !important;
+    border-radius: 0;
+    position: relative;
+    transition: color 0.2s;
   }
-  .sidebar-nav a span { display: block; font-size: 0.7rem; font-weight: normal; }
+  .sidebar-nav .nav-icon {
+    font-size: 1.35rem;
+    display: block;
+    line-height: 1;
+  }
+  .sidebar-nav .nav-label {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 500;
+    opacity: 0.88;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 58px;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .sidebar-nav a::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: transparent;
+    transition: background 0.2s;
+  }
+
+  .sidebar-nav a.active::after {
+    background: var(--accent, #ff6f00);
+  }
+
+  .sidebar-nav a span {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 500;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60px;
+    text-align: center;
+  }
+
   .sidebar-nav a.active {
-    color: var(--accent);
-    box-shadow: inset 0 -3px 0 var(--accent);
-    font-weight: bold;
+    color: var(--accent, #ff6f00);
+    font-weight: 700;
   }
-  
-  /* Sidebar action icons */
+
+  /* Action footer (logout + theme) — compact row */
   .sidebar-footer {
     display: flex;
-    flex-direction: row;
-    padding: 0 0.5rem;
-    border: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    gap: 0.25rem;
-  }
-  .theme-toggle { margin: 0; padding: 0.5rem; font-size: 1.25rem; border: none; }
-  .sidebar-footer #btn-logout { font-size: 0; padding: 0.5rem; min-width:0; border:none; background:transparent;}
-  .sidebar-footer #btn-logout::before { content: "🚪"; font-size: 1.25rem; }
-  
-  /* Top Bar Header */
-  .top-bar {
-    padding: 1rem;
     flex-direction: column;
-    gap: 1rem;
-    border-bottom: 1px solid var(--border);
+    justify-content: center;
+    align-items: center;
+    padding: 0 6px;
+    border: none;
+    border-right: 1px solid rgba(255,255,255,0.12);
+    gap: 4px;
+    flex-shrink: 0;
   }
-  .search-wrap { max-width: 100%; width: 100%; }
+  .sidebar-footer #btn-logout {
+    font-size: 0;
+    padding: 6px;
+    background: transparent;
+    border: none;
+    line-height: 1;
+  }
+  .sidebar-footer #btn-logout::before { content: "🚪"; font-size: 1.2rem; display: block; }
+  .theme-toggle { margin: 0; padding: 6px; font-size: 1.2rem; width: auto; border: none; }
+
+  /* ─── Top bar ─── */
+  .top-bar {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .search-wrap { max-width: 100%; width: 100%; flex: 1 1 100%; }
   .top-bar-actions {
     width: 100%;
-    justify-content: center;
+    display: flex;
     flex-wrap: wrap;
-    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: flex-end;
   }
-  
-  /* Container paddings */
-  .content-area { padding: 1rem 0.75rem; }
-  .form-row { grid-template-columns: 1fr; gap: 0.75rem; }
-  
-  /* Responsive Grids */
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-  .stat-card { padding: 1rem; }
-  .stat-card .value { font-size: 1.25rem; }
-  
-  /* Bottom Sheet Modals replacing floating dialogs */
+  .top-bar-actions .btn { font-size: 0.8rem; padding: 0.4rem 0.7rem; }
+  .current-page-title { font-size: 1rem; }
+
+  /* ─── Content area ─── */
+  .content-area { padding: 0.85rem 0.75rem; }
+
+  /* ─── Forms ─── */
+  .form-row { grid-template-columns: 1fr; gap: 0.65rem; }
+
+  /* ─── Stat cards ─── */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 1rem; }
+  .stat-card { padding: 0.85rem; }
+  .stat-card h4 { font-size: 0.78rem; }
+  .stat-card .value { font-size: 1.15rem; }
+
+  /* ─── Tables: horizontal scroll ─── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.data-table { min-width: 500px; font-size: 0.82rem; }
+  table.data-table th, table.data-table td { padding: 0.6rem 0.65rem; }
+
+  /* ─── Cards ─── */
+  .card { padding: 1rem; margin-bottom: 1rem; border-radius: 10px; }
+  .card-title { font-size: 1rem; }
+
+  /* ─── Bottom-sheet Modals ─── */
   .overlay { align-items: flex-end; padding: 0; }
   .modal {
-    border-radius: 25px 25px 0 0;
-    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    width: 100%;
     margin: 0;
-    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-header { padding: 1rem 1.25rem; }
+  .modal-body { padding: 1.25rem; }
+  .modal-footer { padding: 0.85rem 1.25rem; flex-wrap: wrap; gap: 0.5rem; }
+  .modal-footer .btn { flex: 1; }
+
+  /* Branch tabs */
+  .branch-tabs { gap: 6px !important; margin-bottom: 12px !important; }
+  .branch-tabs .btn { padding: 0.4rem 0.65rem; font-size: 0.82rem; }
+
+  /* Login card */
+  .login-card { padding: 1.75rem 1.25rem; }
+
+  /* Chart */
+  .chart-container { height: 220px; }
+
+  /* Attendance steps */
+  #content-area .btn[style*="padding:20px"] {
+    padding: 14px 22px !important;
+    font-size: 1rem !important;
   }
 }
 
-/* Extra small devices */
+/* ── Small phones ≤ 480px ── */
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr; }
-  .btn { font-size: 0.9rem; padding: 0.6rem 1rem; }
-  .top-bar-actions .btn { width: 100%; justify-content: center; } /* full width buttons in top bar */
+  .top-bar { padding: 0.6rem 0.75rem; }
+  .top-bar-actions { justify-content: center; }
+  .top-bar-actions .btn { flex: 1; min-width: 100px; font-size: 0.78rem; padding: 0.38rem 0.5rem; }
+  .login-card { padding: 1.5rem 1rem; }
+  .login-header h1 { font-size: 1.6rem; }
+  .content-area { padding: 0.65rem 0.5rem; }
+  .card { padding: 0.85rem; }
+  .export-bar .btn { flex: 1; font-size: 0.82rem; }
+  table.data-table { min-width: 420px; font-size: 0.78rem; }
+  .modal-footer { flex-direction: column; }
+  .modal-footer .btn { width: 100%; }
 }
 
+/* ── Slide-up animation for bottom-sheet modals ── */
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 /* ===== Animations ===== */
@@ -828,4 +960,85 @@ table.data-table mark {
   display: inline-block;
   margin-top: 6px;
   font-weight: 600;
+}
+
+/* ===== iPhone Notch / Safe Area ===== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  /* Push bottom-nav above the home-indicator on iPhone X+ */
+  @media (max-width: 768px) {
+    .sidebar {
+      padding-bottom: env(safe-area-inset-bottom);
+      height: calc(72px + env(safe-area-inset-bottom));
+    }
+    .app-shell {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ===== Touch feedback — instant tap highlight ===== */
+.btn, .sidebar-nav a, .modal-close {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar-nav a:active {
+  opacity: 0.7;
+  transform: scale(0.95);
+  transition: opacity 0.1s, transform 0.1s;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.1s;
+}
+
+/* ===== Loading Spinner (Firebase loading overlay) ===== */
+#firebase-loading {
+  background: var(--bg, #f5f7fa) !important;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Prevent body scroll when modal open ===== */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ===== Table mobile — make action buttons smaller ===== */
+@media (max-width: 768px) {
+  table.data-table .btn-sm {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
+    margin: 1px;
+  }
+  /* Stack action buttons vertically in table cells */
+  table.data-table td:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 80px;
+  }
+  /* Make search bar visible and not too tall */
+  .search-input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  /* Forms: use native font-size to prevent iOS auto-zoom */
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .login-form input {
+    font-size: 16px;
+  }
+}
+
+/* ===== Dark mode loading screen ===== */
+[data-theme="dark"] #firebase-loading {
+  background: #121212 !important;
+  color: #b3d4fc !important;
+}
+[data-theme="dark"] #firebase-loading div {
+  border-color: #1e3a5f !important;
+  border-top-color: #4f8ef7 !important;
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Al Hussainy FC - Main app: login, sidebar, routing, access control
  */
 (function () {
@@ -73,6 +73,23 @@
     });
   }
 
+  const ROUTE_ICONS = {
+    [ROUTES.DASHBOARD]:        '📊',
+    [ROUTES.ADD_PLAYER]:       '⚽',
+    [ROUTES.ADD_COACH]:        '🏋️',
+    [ROUTES.ADD_EMPLOYEE]:     '👤',
+    [ROUTES.PLAYERS_LIST]:     '📋',
+    [ROUTES.COACHES_LIST]:     '🎽',
+    [ROUTES.EMPLOYEES_LIST]:   '🗂️',
+    [ROUTES.FINANCIAL]:        '💰',
+    [ROUTES.UPCOMING_PAYMENTS]:'📅',
+    [ROUTES.NOTIFICATIONS]:    '🔔',
+    [ROUTES.ACCOUNTS]:         '🔑',
+    [ROUTES.PASSWORDS]:        '🔒',
+    [ROUTES.ATTENDANCE]:       '✅',
+    [ROUTES.BACKUP]:           '💾',
+  };
+
   function buildSidebar() {
     const user = getCurrentUser();
     if (!user) return;
@@ -80,17 +97,21 @@
     let html = '';
     allowed.forEach(r => {
       const label = ROUTE_LABELS[r];
-      html += `<a href="#" data-route="${r}">${label}</a>`;
+      const icon  = ROUTE_ICONS[r] || '•';
+      html += `<a href="#" data-route="${r}"><span class="nav-icon">${icon}</span><span class="nav-label">${label}</span></a>`;
     });
     sidebarNav.innerHTML = html;
     sidebarNav.querySelectorAll('a').forEach(a => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
         navigateTo(a.dataset.route);
+        // Close any open mobile scroll snapping
+        sidebarNav.scrollTo({ left: a.offsetLeft - 20, behavior: 'smooth' });
       });
     });
     updateSidebarActive();
   }
+
 
   function renderContent() {
     const user = getCurrentUser();
@@ -437,16 +458,16 @@
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    openModal(modal);
     modal.querySelector('#edit-player-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       updatePlayer(p.id, Object.fromEntries(fd.entries()));
-      modal.remove();
+      closeModal(modal);
       renderContent();
     });
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
-    modal.querySelector('.btn-cancel-edit').addEventListener('click', () => modal.remove());
+    modal.querySelector('.modal-close').addEventListener('click', () => closeModal(modal));
+    modal.querySelector('.btn-cancel-edit').addEventListener('click', () => closeModal(modal));
   }
 
   function escapeAttr(s) {
@@ -456,6 +477,25 @@
       .replace(/"/g, '&quot;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  /** Open a modal element and lock body scroll on mobile */
+  function openModal(el) {
+    document.body.appendChild(el);
+    document.body.classList.add('modal-open');
+    // Allow tapping backdrop to close
+    el.addEventListener('click', (e) => {
+      if (e.target === el) closeModal(el);
+    });
+  }
+
+  /** Close a modal element and restore body scroll */
+  function closeModal(el) {
+    el.remove();
+    // Only release lock if no other modals open
+    if (!document.querySelector('.overlay')) {
+      document.body.classList.remove('modal-open');
+    }
   }
 
   function renderCoachesList(role, searchQ) {
@@ -585,16 +625,16 @@
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    openModal(modal);
     modal.querySelector('#edit-coach-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       updateCoach(c.id, Object.fromEntries(fd.entries()));
-      modal.remove();
+      closeModal(modal);
       renderContent();
     });
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
-    modal.querySelector('.btn-cancel-edit').addEventListener('click', () => modal.remove());
+    modal.querySelector('.modal-close').addEventListener('click', () => closeModal(modal));
+    modal.querySelector('.btn-cancel-edit').addEventListener('click', () => closeModal(modal));
   }
 
   function renderAddEmployeeForm(role) {
@@ -749,16 +789,16 @@
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    openModal(modal);
     modal.querySelector('#edit-employee-form').addEventListener('submit', (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
       updateEmployee(e.id, Object.fromEntries(fd.entries()));
-      modal.remove();
+      closeModal(modal);
       renderContent();
     });
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
-    modal.querySelector('.btn-cancel-edit').addEventListener('click', () => modal.remove());
+    modal.querySelector('.modal-close').addEventListener('click', () => closeModal(modal));
+    modal.querySelector('.btn-cancel-edit').addEventListener('click', () => closeModal(modal));
   }
 
   function renderFinancialDashboard() {
@@ -1035,7 +1075,7 @@
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    openModal(modal);
     
     const createForm = modal.querySelector('#form-create-account');
     createForm.addEventListener('submit', async (e) => {
@@ -1084,7 +1124,7 @@
         setUsers(users);
         
         logNotification('account_created', getCurrentUser().email, { targetEmail: email, role });
-        modal.remove();
+        closeModal(modal);
         renderContent();
       } catch (error) {
         console.error("Account creation error:", error);
@@ -1095,8 +1135,8 @@
       }
     });
     
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
-    modal.querySelector('.btn-cancel-create').addEventListener('click', () => modal.remove());
+    modal.querySelector('.modal-close').addEventListener('click', () => closeModal(modal));
+    modal.querySelector('.btn-cancel-create').addEventListener('click', () => closeModal(modal));
   }
 
   function renderBackupPage() {
@@ -1400,9 +1440,50 @@
   document.body.appendChild(loadingDiv);
 
   // ── Firebase Auth State Listener ──
-  firebase.auth().onAuthStateChanged((firebaseUser) => {
-    if (firebaseUser && isSessionValid()) {
-      // User is logged in AND has a active app session
+  firebase.auth().onAuthStateChanged(async (firebaseUser) => {
+    if (firebaseUser) {
+      // Firebase remembers the user — check if we have a valid local session
+      if (!isSessionValid()) {
+        // Session expired or missing (new device/tab open) — auto-restore from Firestore
+        try {
+          const userDoc = await firebase.firestore().collection('users').doc(firebaseUser.uid).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            if (userData.enabled !== false) {
+              // Rebuild session automatically — user doesn't need to log in again
+              const sessionUser = {
+                id: firebaseUser.uid,
+                email: firebaseUser.email,
+                role: userData.role,
+                name: userData.name || firebaseUser.email
+              };
+              setSessionData({ user: sessionUser });
+            } else {
+              // Account disabled — sign out
+              await firebase.auth().signOut();
+              if (loadingDiv.parentNode) loadingDiv.remove();
+              initTheme();
+              showLogin();
+              return;
+            }
+          } else {
+            // No Firestore record — sign out
+            await firebase.auth().signOut();
+            if (loadingDiv.parentNode) loadingDiv.remove();
+            initTheme();
+            showLogin();
+            return;
+          }
+        } catch (err) {
+          console.error('Auto-restore session error:', err);
+          if (loadingDiv.parentNode) loadingDiv.remove();
+          initTheme();
+          showLogin();
+          return;
+        }
+      }
+
+      // Now we have a valid session — load data and show app
       initDB().then(() => {
         if (loadingDiv.parentNode) loadingDiv.remove();
         initTheme();
@@ -1419,14 +1500,10 @@
         loadingDiv.innerHTML = '<span style="color:#c62828">⚠️ خطأ في تحميل البيانات. تأكد من اتصال الإنترنت أو الصلاحيات.</span>';
       });
     } else {
-      // No active session or not logged in - Always show login
+      // No Firebase user at all — always show login
       if (loadingDiv.parentNode) loadingDiv.remove();
       initTheme();
-      
-      // We don't sign out automatically here to avoid loops, 
-      // but we ensure the login screen is visible.
       showLogin();
-
       if (typeof initSeedData === 'function') initSeedData();
     }
   });

@@ -239,8 +239,8 @@ const _LOCAL_KEYS = {
 
 function _getLocal(key, def = null) {
   try {
-    const storage = key === _LOCAL_KEYS.SESSION ? sessionStorage : localStorage;
-    const raw = storage.getItem(key);
+    // Always use localStorage for all keys including session — persists across browser restarts
+    const raw = localStorage.getItem(key);
     if (raw == null) return def;
     return JSON.parse(raw);
   } catch { return def; }
@@ -248,16 +248,15 @@ function _getLocal(key, def = null) {
 
 function _setLocal(key, value) {
   try { 
-    const storage = key === _LOCAL_KEYS.SESSION ? sessionStorage : localStorage;
-    storage.setItem(key, JSON.stringify(value)); 
+    localStorage.setItem(key, JSON.stringify(value)); 
   } catch(e) {}
 }
 
 function getSession()        { return _getLocal(_LOCAL_KEYS.SESSION, null); }
 function setSession(obj)     { _setLocal(_LOCAL_KEYS.SESSION, obj); }
 function clearSession()      { 
-  sessionStorage.removeItem(_LOCAL_KEYS.SESSION); 
-  localStorage.removeItem(_LOCAL_KEYS.SESSION); // Clean up legacy
+  localStorage.removeItem(_LOCAL_KEYS.SESSION);
+  sessionStorage.removeItem(_LOCAL_KEYS.SESSION); // Clean up legacy
 }
 
 function getTheme()          { return localStorage.getItem(_LOCAL_KEYS.THEME) || 'light'; }

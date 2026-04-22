@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Al Hussainy FC - Main app: login, sidebar, routing, access control
  */
 (function () {
@@ -1022,28 +1022,67 @@
 
   function bindAccountsPage() {
     document.getElementById('btn-create-account')?.addEventListener('click', openCreateAccountModal);
+
+    // ── تعطيل / تفعيل حساب ──────────────────────────────────────────────
     document.querySelectorAll('.btn-toggle-account').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         const users = getUsers();
         const u = users.find(x => x.id === id);
         if (!u || u.id === getCurrentUser().id) return;
-        u.enabled = u.enabled === false;
-        setUsers(users);
-        logNotification(u.enabled ? 'account_enabled' : 'account_disabled', getCurrentUser().email, { targetEmail: u.email });
-        renderContent();
+
+        const newEnabled = (u.enabled === false); // قلب الحالة
+        btn.disabled = true;
+
+        try {
+          // تحديث حقل enabled مباشرةً في Firestore باستخدام الـ UID كـ Document ID
+          await _firestoreDB.collection('users').doc(id).update({ enabled: newEnabled });
+
+          // تحديث الـ cache المحلي بعد نجاح السيرفر
+          u.enabled = newEnabled;
+          _cache.users = users;
+
+          logNotification(
+            newEnabled ? 'account_enabled' : 'account_disabled',
+            getCurrentUser().email,
+            { targetEmail: u.email }
+          );
+          renderContent();
+        } catch (error) {
+          console.error('[Toggle Account] Firestore error:', error);
+          alert('فشل تعديل الحساب: ' + error.message);
+          btn.disabled = false;
+        }
       });
     });
+
+    // ── حذف حساب ────────────────────────────────────────────────────────
     document.querySelectorAll('.btn-delete-account').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         const users = getUsers();
         const u = users.find(x => x.id === id);
         if (!u || u.id === getCurrentUser().id) return;
         if (!confirm('حذف الحساب ' + u.email + '؟')) return;
-        logNotification('account_deleted', getCurrentUser().email, { targetEmail: u.email });
-        setUsers(users.filter(x => x.id !== id));
-        renderContent();
+
+        btn.disabled = true;
+        btn.textContent = 'جاري الحذف...';
+
+        try {
+          // حذف الـ Document مباشرةً من Firestore باستخدام الـ UID
+          await _firestoreDB.collection('users').doc(id).delete();
+
+          // تحديث الـ cache المحلي بعد نجاح السيرفر فقط
+          _cache.users = users.filter(x => x.id !== id);
+
+          logNotification('account_deleted', getCurrentUser().email, { targetEmail: u.email });
+          renderContent();
+        } catch (error) {
+          console.error('[Delete Account] Firestore error:', error);
+          alert('فشل حذف الحساب: ' + error.message);
+          btn.disabled = false;
+          btn.textContent = 'حذف';
+        }
       });
     });
   }

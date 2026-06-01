@@ -90,6 +90,8 @@
     [ROUTES.PASSWORDS]:        '🔒',
     [ROUTES.ATTENDANCE]:       '✅',
     [ROUTES.BACKUP]:           '💾',
+    [ROUTES.EXPENSES]:         '💸',
+    [ROUTES.CLUB_PAYMENTS]:    '🏢',
   };
 
   function buildSidebar() {
@@ -181,6 +183,14 @@
       case ROUTES.ATTENDANCE:
         contentArea.innerHTML = renderAttendancePage();
         bindAttendancePage();
+        break;
+      case ROUTES.EXPENSES:
+        contentArea.innerHTML = renderExpensesPage();
+        bindExpensesPage();
+        break;
+      case ROUTES.CLUB_PAYMENTS:
+        contentArea.innerHTML = renderClubPaymentsPage();
+        bindClubPaymentsPage();
         break;
       default:
         contentArea.innerHTML = '<div class="empty-state"><h2>الصفحة غير موجودة</h2></div>';
@@ -448,13 +458,16 @@
     html += '</div>';
     html += '</div>';
 
-    html += `<div class="card printable-content"><h3 class="card-title">قائمة اللاعبين - فرع ${currentListBranch}</h3><div class="table-wrap"><table class="data-table"><thead><tr>
-      <th>الاسم</th><th>الهاتف</th><th>تاريخ الميلاد</th><th>بداية التعاقد</th><th>انتهاء التعاقد</th><th>قيمة العقد</th><th>المدفوع</th><th>المتبقي</th><th>المركز</th>
+    html += `<div class="card printable-content"><h3 class="card-title">قائمة اللاعبين - فرع ${currentListBranch}</h3>
+    <div class="count-box">إجمالي السجلات: <span class="count-badge">${list.length}</span></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr>
+      <th style="width: 50px;">م</th><th>الاسم</th><th>الهاتف</th><th>تاريخ الميلاد</th><th>بداية التعاقد</th><th>انتهاء التعاقد</th><th>قيمة العقد</th><th>المدفوع</th><th>المتبقي</th><th>المركز</th>
       ${canEdit ? '<th>إجراءات</th>' : ''}
     </tr></thead><tbody>`;
-    if (!list.length) html += '<tr><td colspan="' + (canEdit ? 10 : 9) + '">لا يوجد لاعبين</td></tr>';
-    else list.forEach(p => {
+    if (!list.length) html += '<tr><td colspan="' + (canEdit ? 11 : 10) + '">لا يوجد لاعبين</td></tr>';
+    else list.forEach((p, idx) => {
       html += `<tr data-id="${p.id}">
+        <td>${idx + 1}</td>
         <td>${p.fullName || '—'}</td><td>${p.phone || '—'}</td><td>${p.dateOfBirth || '—'}</td>
         <td>${p.contractStart || '—'}</td><td>${p.contractEnd || '—'}</td>
         <td>${p.contractValue}</td><td>${p.paid}</td><td>${p.remaining}</td><td>${getPositionLabel(p.position)}</td>
@@ -602,17 +615,20 @@
     html += `<button type="button" class="btn btn-primary btn-sm" id="print-coaches">طباعة</button>`;
     if (canExport) html += `<button type="button" class="btn btn-primary btn-sm" id="export-coaches">تصدير Excel</button>`;
     html += '</div>';
-    html += `<div class="card printable-content"><h3 class="card-title">قائمة الكباتن - فرع ${currentListBranch}</h3><div class="table-wrap"><table class="data-table"><thead><tr>
-      <th>الاسم</th><th>الهاتف</th><th>يوم القبض</th><th>بداية التعاقد</th><th>انتهاء التعاقد</th>
+    html += `<div class="card printable-content"><h3 class="card-title">قائمة الكباتن - فرع ${currentListBranch}</h3>
+    <div class="count-box">إجمالي السجلات: <span class="count-badge">${list.length}</span></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr>
+      <th style="width: 50px;">م</th><th>الاسم</th><th>الهاتف</th><th>يوم القبض</th><th>بداية التعاقد</th><th>انتهاء التعاقد</th>
       ${showMoney ? '<th>الراتب</th><th>المدفوع</th><th>المتبقي</th>' : ''}
       ${canEdit ? '<th>إجراءات</th>' : ''}
     </tr></thead><tbody>`;
-    let cols = 5;
+    let cols = 6;
     if (showMoney) cols += 3;
     if (canEdit) cols += 1;
     if (!list.length) html += '<tr><td colspan="' + cols + '">لا يوجد كباتن</td></tr>';
-    else list.forEach(c => {
+    else list.forEach((c, idx) => {
       html += `<tr data-id="${c.id}">
+        <td>${idx + 1}</td>
         <td>${c.name || '—'}</td><td>${c.phone || '—'}</td>
         <td>${c.payday ? 'كل ' + getPaydayDayNumber(c.payday) + ' من الشهر' : '—'}</td>
         <td>${c.contractStart || '—'}</td><td>${c.contractEnd || '—'}</td>
@@ -648,11 +664,27 @@
   function printContentArea() {
     const area = document.getElementById('content-area');
     if (!area) return;
+    
+    // Check if there is any selected row in the area
+    const hasSelection = area.querySelector('.table-row-selected') !== null;
+    
     const prevBg = document.body.style.background;
-    const prevContent = document.body.innerHTML;
     document.body.style.background = '#fff';
+    
     const printWindow = window.open('', '_blank');
-    printWindow.document.write('<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>نادي لشبونة</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>body{font-family:Tajawal,sans-serif;padding:20px;direction:rtl;} table{width:100%;border-collapse:collapse;} th,td{text-align:right;padding:8px;border:1px solid #ddd;}</style></head><body>' + area.innerHTML + '</body></html>');
+    let extraStyle = '';
+    let bodyClass = '';
+    
+    if (hasSelection) {
+      bodyClass = 'class="has-selection"';
+      extraStyle = `
+        body.has-selection tbody tr:not(.table-row-selected) {
+          display: none !important;
+        }
+      `;
+    }
+    
+    printWindow.document.write(`<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>نادي لشبونة</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>body{font-family:Tajawal,sans-serif;padding:20px;direction:rtl;} table{width:100%;border-collapse:collapse;} th,td{text-align:right;padding:8px;border:1px solid #ddd;} ${extraStyle}</style></head><body ${bodyClass}>` + area.innerHTML + '</body></html>');
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
@@ -678,7 +710,7 @@
             <div class="form-group"><label>الاسم</label><input type="text" name="name" value="${escapeAttr(c.name)}" required></div>
             <div class="form-group"><label>الهاتف</label><input type="text" name="phone" value="${escapeAttr(c.phone)}"></div>
             <div class="form-row">
-              <div class="form-group"><label>يوم القبض (من الشهر)</label><input type="number" name="payday" value="${c.payday || ''}" min="1" max="31" placeholder="مثال: 15"></div>
+              <div class="form-group"><label>يوم القبض (من الشهر)</label><input type="number" name="payday" value="${getPaydayDayNumber(c.payday) || ''}" min="1" max="31" placeholder="مثال: 15"></div>
               <div class="form-group">
                 <label>الفرع</label>
                 <select name="branch" required>
@@ -798,13 +830,16 @@
     html += '<div class="export-bar">';
     html += `<button type="button" class="btn btn-primary btn-sm" id="print-employees">طباعة</button>`;
     html += '</div>';
-    html += `<div class="card printable-content"><h3 class="card-title">قائمة الموظفين - فرع ${currentListBranch}</h3><div class="table-wrap"><table class="data-table"><thead><tr>
-      <th>الاسم</th><th>الهاتف</th><th>يوم القبض</th><th>الراتب</th><th>المدفوع</th><th>المتبقي</th>
+    html += `<div class="card printable-content"><h3 class="card-title">قائمة الموظفين - فرع ${currentListBranch}</h3>
+    <div class="count-box">إجمالي السجلات: <span class="count-badge">${list.length}</span></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr>
+      <th style="width: 50px;">م</th><th>الاسم</th><th>الهاتف</th><th>يوم القبض</th><th>الراتب</th><th>المدفوع</th><th>المتبقي</th>
       ${canEdit ? '<th>إجراءات</th>' : ''}
     </tr></thead><tbody>`;
-    if (!list.length) html += '<tr><td colspan="' + (canEdit ? 7 : 6) + '">لا يوجد موظفين</td></tr>';
-    else list.forEach(e => {
+    if (!list.length) html += '<tr><td colspan="' + (canEdit ? 8 : 7) + '">لا يوجد موظفين</td></tr>';
+    else list.forEach((e, idx) => {
       html += `<tr data-id="${e.id}">
+        <td>${idx + 1}</td>
         <td>${e.name || '—'}</td><td>${e.phone || '—'}</td>
         <td>${e.payday ? 'كل ' + getPaydayDayNumber(e.payday) + ' من الشهر' : '—'}</td>
         <td>${e.salary}</td><td>${e.paid}</td><td>${e.remaining}</td>
@@ -851,7 +886,7 @@
             <div class="form-group"><label>الاسم</label><input type="text" name="name" value="${escapeAttr(e.name)}" required></div>
             <div class="form-group"><label>الهاتف</label><input type="text" name="phone" value="${escapeAttr(e.phone)}"></div>
             <div class="form-row">
-              <div class="form-group"><label>يوم القبض (من الشهر)</label><input type="number" name="payday" value="${e.payday || ''}" min="1" max="31" placeholder="مثال: 15" required></div>
+              <div class="form-group"><label>يوم القبض (من الشهر)</label><input type="number" name="payday" value="${getPaydayDayNumber(e.payday) || ''}" min="1" max="31" placeholder="مثال: 15" required></div>
               <div class="form-group">
                 <label>الفرع</label>
                 <select name="branch" required>
@@ -1008,6 +1043,7 @@
             <table class="data-table">
               <thead>
                 <tr>
+                  <th style="width: 50px;">م</th>
                   <th>الاسم</th>
                   <th>الهاتف</th>
                   <th>الفرع</th>
@@ -1017,8 +1053,9 @@
                 </tr>
               </thead>
               <tbody>
-                ${sortedPaidPlayers.map(p => `
-                  <tr>
+                ${sortedPaidPlayers.map((p, idx) => `
+                  <tr data-id="${p.id}">
+                    <td>${idx + 1}</td>
                     <td>${escapeHtml(p.fullName || '—')}</td>
                     <td>${escapeHtml(p.phone || '—')}</td>
                     <td>${escapeHtml(p.branch || 'القاهرة')}</td>
@@ -1039,6 +1076,7 @@
             <table class="data-table">
               <thead>
                 <tr>
+                  <th style="width: 50px;">م</th>
                   <th>الاسم</th>
                   <th>الهاتف</th>
                   <th>الفرع</th>
@@ -1048,8 +1086,9 @@
                 </tr>
               </thead>
               <tbody>
-                ${sortedPaidCoaches.map(c => `
-                  <tr>
+                ${sortedPaidCoaches.map((c, idx) => `
+                  <tr data-id="${c.id}">
+                    <td>${idx + 1}</td>
                     <td>${escapeHtml(c.name || '—')}</td>
                     <td>${escapeHtml(c.phone || '—')}</td>
                     <td>${escapeHtml(c.branch || 'القاهرة')}</td>
@@ -1072,6 +1111,7 @@
             <table class="data-table">
               <thead>
                 <tr>
+                  <th style="width: 50px;">م</th>
                   <th>الاسم</th>
                   <th>الهاتف</th>
                   <th>الفرع</th>
@@ -1081,8 +1121,9 @@
                 </tr>
               </thead>
               <tbody>
-                ${sortedPaidEmployees.map(e => `
-                  <tr>
+                ${sortedPaidEmployees.map((e, idx) => `
+                  <tr data-id="${e.id}">
+                    <td>${idx + 1}</td>
                     <td>${escapeHtml(e.name || '—')}</td>
                     <td>${escapeHtml(e.phone || '—')}</td>
                     <td>${escapeHtml(e.branch || 'القاهرة')}</td>
@@ -1117,47 +1158,115 @@
 
   function renderUpcomingPayments() {
     let list = getUpcomingPayments();
-    // Filter out those who have already confirmed this month
-    list = list.filter(u => {
-      // If payday hasn't been defined properly, keep them (or filter out depending on logic, but getUpcomingPayments handles this)
-      if (!u.id) return false;
-      const confirmed = isPaydayConfirmed(u.id);
-      return !confirmed; // Only show unconfirmed!
+    // Filter out players (and those with invalid IDs, just in case)
+    const upcomingStaff = list.filter(u => (u.type === 'coach' || u.type === 'employee') && u.id);
+
+    const branches = ['القاهرة', 'الجيزة', 'سوهاج', 'الأقصر'];
+    const typeLabel = (t) => t === 'coach' ? 'كابتن' : 'موظف';
+
+    let html = '';
+
+    branches.forEach((branch, idx) => {
+      const branchList = upcomingStaff.filter(u => (u.branch || 'القاهرة') === branch);
+      const ordinalWords = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
+      const sectionName = `القسم ${ordinalWords[idx] || (idx + 1)}: المدفوعات القادمة - فرع ${branch} (خلال ${SALARY_ALERT_DAYS} أيام)`;
+
+      html += `
+        <div class="card animate-in">
+          <h3 class="card-title">${sectionName}</h3>
+      `;
+
+      if (!branchList.length) {
+        html += '<p class="empty-state">لا توجد مدفوعات قادمة لهذا الفرع خلال 7 أيام</p>';
+      } else {
+        html += `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>الوظيفة</th>
+                  <th>المبلغ المستحق</th>
+                  <th>تاريخ الاستحقاق</th>
+                  <th style="text-align:center">الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${branchList.map(u => {
+                  const amountDue = u.remaining !== undefined ? u.remaining : (u.salary || 0);
+                  return `
+                    <tr data-id="${u.id}">
+                      <td><strong>${escapeHtml(u.name || u.fullName)}</strong></td>
+                      <td><span class="badge ${u.type === 'coach' ? 'badge-coach' : 'badge-employee'}">${typeLabel(u.type)}</span></td>
+                      <td style="color: var(--warning); font-weight: bold;">${Number(amountDue).toLocaleString('ar-SA')} ج.م</td>
+                      <td>${u.contractEnd || '—'}</td>
+                      <td style="text-align:center">
+                        <button type="button" class="btn btn-sm btn-success btn-payday-confirm" data-id="${u.id}" data-type="${u.type}">
+                          تم صرف الراتب / الدفع
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      html += '</div>';
     });
 
-    const typeLabel = (t) => t === 'player' ? 'لاعب' : t === 'coach' ? 'كابتن' : 'موظف';
-    let html = `<div class="card"><h3 class="card-title">المدفوعات القادمة (خلال ${SALARY_ALERT_DAYS} أيام)</h3>`;
-    if (!list.length) {
-      html += '<p class="empty-state">لا يوجد أشخاص مستحقين للدفع حالياً (أو تم تأكيد الدفع للجميع)</p>';
-    } else {
-      html += '<div class="table-wrap"><table class="data-table"><thead><tr><th>النوع</th><th>الاسم</th><th>يوم القبض</th><th>بعد (أيام)</th><th>تأكيد الدفع</th></tr></thead><tbody>';
-      html += list.map(u => {
-        const reached = u.daysUntil <= 0;
-        const checkBtn = reached
-          ? `<button type="button" class="btn-payday-check" data-id="${u.id}" title="تأكيد القبض" style="font-size:1.3rem;background:none;border:none;cursor:pointer;">⬜</button>`
-          : `<span style="color:var(--text-muted);font-size:0.85rem;">—</span>`;
-          
-        return `<tr>
-          <td>${typeLabel(u.type)}</td>
-          <td>${escapeHtml(u.fullName || u.name)}</td>
-          <td>كل ${u.paydayDay || getPaydayDayNumber(u.payday)} من الشهر</td>
-          <td>${u.daysUntil === 0 ? 'اليوم' : u.daysUntil < 0 ? Math.abs(u.daysUntil) + ' مضى' : u.daysUntil}</td>
-          <td style="text-align:center">${checkBtn}</td>
-        </tr>`;
-      }).join('');
-      html += '</tbody></table></div>';
-    }
-    html += '</div>';
     return html;
   }
 
   function bindUpcomingPayments() {
-    document.querySelectorAll('.btn-payday-check').forEach(btn => {
+    document.querySelectorAll('.btn-payday-confirm').forEach(btn => {
       btn.addEventListener('click', () => {
-        // Toggle confirmation to true
-        togglePaydayConfirmation(btn.dataset.id);
-        // Re-render so the person disappears from the list
-        renderContent();
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        
+        let name = '';
+        if (type === 'coach') {
+          const coaches = getCoaches();
+          const coach = coaches.find(x => x.id === id);
+          name = coach ? coach.name : '';
+        } else if (type === 'employee') {
+          const employees = getEmployees();
+          const emp = employees.find(x => x.id === id);
+          name = emp ? emp.name : '';
+        }
+
+        if (confirm(`تأكيد صرف الراتب / الدفع وتأجيله للشهر القادم لـ: ${name}؟`)) {
+          if (type === 'coach') {
+            const coaches = getCoaches();
+            const idx = coaches.findIndex(c => c.id === id);
+            if (idx !== -1) {
+              const c = coaches[idx];
+              c.paid = c.salary;
+              c.remaining = 0;
+              c.payday = addMonthToPayday(c.payday);
+              setCoaches(coaches);
+              if (typeof logNotification === 'function') {
+                logNotification('coach_payment_confirm', null, { coachId: id, name: c.name, amount: c.salary });
+              }
+            }
+          } else if (type === 'employee') {
+            const employees = getEmployees();
+            const idx = employees.findIndex(e => e.id === id);
+            if (idx !== -1) {
+              const e = employees[idx];
+              e.paid = e.salary;
+              e.remaining = 0;
+              e.payday = addMonthToPayday(e.payday);
+              setEmployees(employees);
+              if (typeof logNotification === 'function') {
+                logNotification('employee_payment_confirm', null, { employeeId: id, name: e.name, amount: e.salary });
+              }
+            }
+          }
+          // Re-render to show updated lists immediately
+          renderContent();
+        }
       });
     });
   }
@@ -1634,6 +1743,311 @@
     });
   }
 
+  function renderExpensesPage() {
+    const list = getExpenses() || [];
+    let html = `
+      <div class="card animate-in">
+        <h3 class="card-title">تسجيل مصاريف جديدة</h3>
+        <form id="form-expense">
+          <div class="form-row">
+            <div class="form-group">
+              <label>الاسم</label>
+              <input type="text" name="name" required placeholder="اسم الشخص الذي أخذ المال">
+            </div>
+            <div class="form-group">
+              <label>المبلغ المأخوذ (ج.م)</label>
+              <input type="number" name="amount" min="0.01" step="0.01" required placeholder="المبلغ بالجنيه">
+            </div>
+            <div class="form-group">
+              <label>المصرّح بأخذ المبلغ</label>
+              <input type="text" name="authorizedBy" required placeholder="اسم المسؤول المصرّح">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>سبب أخذ المال</label>
+            <textarea name="reason" rows="3" required placeholder="تفاصيل وسبب الصرف..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">إضافة مصروف</button>
+        </form>
+      </div>
+      
+      <div class="card printable-content animate-in">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.75rem; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+          <h3 style="margin:0; font-size:1.15rem; font-weight:700; border:none; padding:0;">جدول المصاريف</h3>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-primary btn-sm" id="print-expenses">طباعة</button>
+            <button type="button" class="btn btn-primary btn-sm" id="export-expenses">تصدير Excel</button>
+          </div>
+        </div>
+        <div class="count-box">إجمالي السجلات: <span class="count-badge" id="expenses-count-badge">${list.length}</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">م</th>
+                <th>الاسم</th>
+                <th>المبلغ</th>
+                <th>المصرّح بالصرف</th>
+                <th>سبب أخذ المال</th>
+                <th>التاريخ</th>
+                <th>الوقت</th>
+              </tr>
+            </thead>
+            <tbody id="expenses-table-body">
+    `;
+    
+    if (!list.length) {
+      html += `<tr><td colspan="7" style="text-align:center;">لا توجد مصاريف مسجلة بعد</td></tr>`;
+    } else {
+      html += renderExpensesRows(list);
+    }
+    
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    return html;
+  }
+
+  function renderExpensesRows(list) {
+    return list.map((e, idx) => {
+      const at = e.createdAt ? new Date(e.createdAt) : new Date();
+      const dateStr = at.toLocaleDateString('ar-EG');
+      const timeStr = at.toLocaleTimeString('ar-EG');
+      return `
+        <tr data-id="${e.id}">
+          <td>${idx + 1}</td>
+          <td><strong>${escapeHtml(e.name)}</strong></td>
+          <td style="color:var(--danger); font-weight:bold;">${Number(e.amount).toLocaleString('ar-SA')} ج.م</td>
+          <td>${escapeHtml(e.authorizedBy)}</td>
+          <td>${escapeHtml(e.reason)}</td>
+          <td>${dateStr}</td>
+          <td>${timeStr}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function bindExpensesPage() {
+    const form = document.getElementById('form-expense');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const data = {
+          name: fd.get('name').trim(),
+          amount: parseFloat(fd.get('amount')) || 0,
+          authorizedBy: fd.get('authorizedBy').trim(),
+          reason: fd.get('reason').trim()
+        };
+        
+        addExpense(data);
+        form.reset();
+        
+        // Update table live without reloading page
+        const tableBody = document.getElementById('expenses-table-body');
+        const list = getExpenses();
+        if (tableBody) {
+          tableBody.innerHTML = renderExpensesRows(list);
+        }
+        
+        const countBadge = document.getElementById('expenses-count-badge');
+        if (countBadge) {
+          countBadge.textContent = list.length;
+        }
+      });
+    }
+    
+    document.getElementById('print-expenses')?.addEventListener('click', () => printContentArea());
+    document.getElementById('export-expenses')?.addEventListener('click', () => {
+      if (typeof exportExpensesToExcel === 'function') {
+        exportExpensesToExcel();
+      }
+    });
+  }
+
+  let clubPaymentsBranchFilter = 'all';
+
+  function renderClubPaymentsPage() {
+    const list = getClubPayments() || [];
+    const filteredList = clubPaymentsBranchFilter === 'all' 
+      ? list 
+      : list.filter(p => p.branch === clubPaymentsBranchFilter);
+
+    let html = `
+      <div class="card animate-in">
+        <h3 class="card-title">تسجيل موعد سداد جديد للأندية</h3>
+        <form id="form-club-payment">
+          <div class="form-row">
+            <div class="form-group">
+              <label>الفرع</label>
+              <select name="branch" required>
+                <option value="القاهرة">القاهرة</option>
+                <option value="الجيزة">الجيزة</option>
+                <option value="سوهاج">سوهاج</option>
+                <option value="الأقصر">الأقصر</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>اسم النادي</label>
+              <input type="text" name="clubName" required placeholder="اسم النادي المستحق">
+            </div>
+            <div class="form-group">
+              <label>المبلغ (ج.م)</label>
+              <input type="number" name="amount" min="0.01" step="0.01" required placeholder="المبلغ الإجمالي">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>المتبقي (ج.م)</label>
+              <input type="number" name="remaining" min="0" step="0.01" required placeholder="المبلغ المتبقي">
+            </div>
+            <div class="form-group">
+              <label>تاريخ السداد</label>
+              <input type="date" name="dueDate" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">إضافة موعد سداد</button>
+        </form>
+      </div>
+      
+      <div class="card printable-content animate-in">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.75rem; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+            <h3 style="margin:0; font-size:1.15rem; font-weight:700; border:none; padding:0;">شيت سداد الأندية</h3>
+            <select id="club-payment-branch-filter" class="form-control" style="width:160px; padding:5px 10px; border-radius:6px; border:1px solid var(--border); font-family:inherit; font-size:0.9rem; background:var(--bg-card); color:var(--text); cursor:pointer;">
+              <option value="all">كل الفروع</option>
+              <option value="القاهرة">القاهرة</option>
+              <option value="الجيزة">الجيزة</option>
+              <option value="سوهاج">سوهاج</option>
+              <option value="الأقصر">الأقصر</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-primary btn-sm" id="print-club-payments">طباعة</button>
+            <button type="button" class="btn btn-primary btn-sm" id="export-club-payments">تصدير Excel</button>
+          </div>
+        </div>
+        <div class="count-box">إجمالي السجلات: <span class="count-badge" id="club-payments-count-badge">${filteredList.length}</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">م</th>
+                <th>الفرع</th>
+                <th>اسم النادي</th>
+                <th>المبلغ</th>
+                <th>المتبقي</th>
+                <th>تاريخ السداد</th>
+                <th>تاريخ ووقت الإدخال</th>
+              </tr>
+            </thead>
+            <tbody id="club-payments-table-body">
+    `;
+    
+    if (!filteredList.length) {
+      html += `<tr><td colspan="7" style="text-align:center;">لا توجد مواعيد سداد مسجلة لهذه الفلترة</td></tr>`;
+    } else {
+      html += renderClubPaymentsRows(filteredList);
+    }
+    
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    return html;
+  }
+
+  function renderClubPaymentsRows(list) {
+    return list.map((p, idx) => {
+      const at = p.createdAt ? new Date(p.createdAt) : new Date();
+      const dateTimeStr = at.toLocaleDateString('ar-EG') + ' ' + at.toLocaleTimeString('ar-EG');
+      return `
+        <tr data-id="${p.id}">
+          <td>${idx + 1}</td>
+          <td><span class="badge badge-coach">${escapeHtml(p.branch)}</span></td>
+          <td><strong>${escapeHtml(p.clubName)}</strong></td>
+          <td style="font-weight:bold;">${Number(p.amount).toLocaleString('ar-SA')} ج.م</td>
+          <td style="color:var(--warning); font-weight:bold;">${Number(p.remaining).toLocaleString('ar-SA')} ج.م</td>
+          <td style="color:var(--danger); font-weight:bold;">${p.dueDate}</td>
+          <td>${dateTimeStr}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function bindClubPaymentsPage() {
+    const form = document.getElementById('form-club-payment');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const data = {
+          branch: fd.get('branch').trim(),
+          clubName: fd.get('clubName').trim(),
+          amount: parseFloat(fd.get('amount')) || 0,
+          remaining: parseFloat(fd.get('remaining')) || 0,
+          dueDate: fd.get('dueDate').trim()
+        };
+        
+        addClubPayment(data);
+        form.reset();
+        
+        const tableBody = document.getElementById('club-payments-table-body');
+        if (tableBody) {
+          const list = getClubPayments() || [];
+          const filteredList = clubPaymentsBranchFilter === 'all' 
+            ? list 
+            : list.filter(x => x.branch === clubPaymentsBranchFilter);
+          tableBody.innerHTML = renderClubPaymentsRows(filteredList);
+          
+          const countBadge = document.getElementById('club-payments-count-badge');
+          if (countBadge) {
+            countBadge.textContent = filteredList.length;
+          }
+        }
+      });
+    }
+
+    const filterSelect = document.getElementById('club-payment-branch-filter');
+    if (filterSelect) {
+      filterSelect.value = clubPaymentsBranchFilter;
+      filterSelect.addEventListener('change', (e) => {
+        clubPaymentsBranchFilter = e.target.value;
+        const tableBody = document.getElementById('club-payments-table-body');
+        if (tableBody) {
+          const list = getClubPayments() || [];
+          const filteredList = clubPaymentsBranchFilter === 'all' 
+            ? list 
+            : list.filter(x => x.branch === clubPaymentsBranchFilter);
+          if (!filteredList.length) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">لا توجد مواعيد سداد مسجلة لهذه الفلترة</td></tr>`;
+          } else {
+            tableBody.innerHTML = renderClubPaymentsRows(filteredList);
+          }
+          
+          const countBadge = document.getElementById('club-payments-count-badge');
+          if (countBadge) {
+            countBadge.textContent = filteredList.length;
+          }
+        }
+      });
+    }
+    
+    document.getElementById('print-club-payments')?.addEventListener('click', () => printContentArea());
+    document.getElementById('export-club-payments')?.addEventListener('click', () => {
+      if (typeof exportClubPaymentsToExcel === 'function') {
+        exportClubPaymentsToExcel();
+      }
+    });
+  }
+
   function showApp() {
     loginScreen.style.display = 'none';
     appShell.style.display = 'flex';
@@ -1686,6 +2100,14 @@
     }
   });
 
+  // Double click event delegation for row selection
+  contentArea.addEventListener('dblclick', (e) => {
+    const tr = e.target.closest('.data-table tbody tr');
+    if (tr) {
+      tr.classList.toggle('table-row-selected');
+    }
+  });
+
   btnLogout.addEventListener('click', () => {
     logout();
     showLogin();
@@ -1718,6 +2140,8 @@
       else if (currentRoute === ROUTES.FINANCIAL && typeof exportFinancialSummaryToExcel === 'function') exportFinancialSummaryToExcel();
       else if (currentRoute === ROUTES.NOTIFICATIONS && typeof exportNotificationsToExcel === 'function') exportNotificationsToExcel();
       else if (currentRoute === ROUTES.ATTENDANCE && typeof exportAttendanceToExcel === 'function') exportAttendanceToExcel();
+      else if (currentRoute === ROUTES.EXPENSES && typeof exportExpensesToExcel === 'function') exportExpensesToExcel();
+      else if (currentRoute === ROUTES.CLUB_PAYMENTS && typeof exportClubPaymentsToExcel === 'function') exportClubPaymentsToExcel();
       else alert('عذراً، التصدير غير متاح لهذه الصفحة أو قيد التطوير.');
     });
   }

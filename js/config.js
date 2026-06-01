@@ -29,7 +29,9 @@ const ROUTES = {
   NOTIFICATIONS: "notifications",
   ACCOUNTS: "accounts",
   PASSWORDS: "passwords",
-  ATTENDANCE: "attendance"
+  ATTENDANCE: "attendance",
+  EXPENSES: "expenses",
+  CLUB_PAYMENTS: "club_payments"
 };
 
 const ROUTE_LABELS = {
@@ -45,7 +47,9 @@ const ROUTE_LABELS = {
   [ROUTES.NOTIFICATIONS]: "الإشعارات",
   [ROUTES.ACCOUNTS]: "إدارة الحسابات",
   [ROUTES.PASSWORDS]: "كلمات المرور",
-  [ROUTES.ATTENDANCE]: "الحضور والانصراف"
+  [ROUTES.ATTENDANCE]: "الحضور والانصراف",
+  [ROUTES.EXPENSES]: "المصاريف",
+  [ROUTES.CLUB_PAYMENTS]: "موعد سداد الأندية"
 };
 
 const PLAYER_POSITIONS = [
@@ -76,6 +80,8 @@ const ROLE_ROUTES = {
     ROUTES.UPCOMING_PAYMENTS,
     ROUTES.NOTIFICATIONS,
     ROUTES.ATTENDANCE,
+    ROUTES.EXPENSES,
+    ROUTES.CLUB_PAYMENTS,
   ],
   [ROLES.SUPER_ADMIN]: [
     ROUTES.DASHBOARD,
@@ -90,7 +96,9 @@ const ROLE_ROUTES = {
     ROUTES.NOTIFICATIONS,
     ROUTES.ACCOUNTS,
     ROUTES.PASSWORDS,
-    ROUTES.ATTENDANCE
+    ROUTES.ATTENDANCE,
+    ROUTES.EXPENSES,
+    ROUTES.CLUB_PAYMENTS
   ]
 };
 

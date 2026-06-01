@@ -16,6 +16,8 @@ const _cache = {
   users: null,
   notifications: [],
   attendance_records: [],
+  expenses: [],
+  club_payments: [],
 };
 
 // ===== Firestore helpers =====
@@ -111,13 +113,15 @@ async function _syncCollection(name, arr, deleteOrphans = true) {
 
 async function initDB() {
   try {
-    const [players, coaches, employees, users, notifications, attendance_records] = await Promise.all([
+    const [players, coaches, employees, users, notifications, attendance_records, expenses, club_payments] = await Promise.all([
       _loadCollection('players'),
       _loadCollection('coaches'),
       _loadCollection('employees'),
       _loadCollection('users'),
       _loadCollection('notifications'),
       _loadCollection('attendance_records'),
+      _loadCollection('expenses'),
+      _loadCollection('club_payments'),
     ]);
     _cache.players            = players;
     _cache.coaches            = coaches;
@@ -125,6 +129,8 @@ async function initDB() {
     _cache.users              = users || []; // Always prioritize array
     _cache.notifications      = notifications;
     _cache.attendance_records = attendance_records;
+    _cache.expenses           = expenses;
+    _cache.club_payments      = club_payments;
 
     // Create default super-admin ONLY if the users collection is truly empty 
     // (and we have permission to know it's empty)
@@ -223,6 +229,24 @@ function setAttendanceRecords(arr) {
   _syncCollection('attendance_records', arr, false);
 }
 
+// ===== Expenses =====
+
+function getExpenses() { return _cache.expenses || []; }
+
+function setExpenses(arr) {
+  _cache.expenses = arr;
+  _syncCollection('expenses', arr);
+}
+
+// ===== Club Payments =====
+
+function getClubPayments() { return _cache.club_payments || []; }
+
+function setClubPayments(arr) {
+  _cache.club_payments = arr;
+  _syncCollection('club_payments', arr);
+}
+
 function addAttendanceRecord(record) {
   const list = getAttendanceRecords();
   list.push(record);
@@ -303,6 +327,44 @@ function getPaydayDayNumber(payday) {
   }
   return 0;
 }
+
+function addMonthToPayday(paydayVal) {
+  if (!paydayVal) return '';
+  const str = String(paydayVal).trim();
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth(); // 0-indexed
+  let day = 15;
+  
+  if (/^\d{1,2}$/.test(str)) {
+    day = parseInt(str, 10);
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const parts = str.split('-');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1; // 0-indexed
+    day = parseInt(parts[2], 10);
+  } else {
+    return paydayVal; // fallback
+  }
+  
+  // Add one month
+  let nextMonth = month + 1;
+  let nextYear = year;
+  if (nextMonth > 11) {
+    nextMonth = 0;
+    nextYear += 1;
+  }
+  
+  // Safely get last day of next month if current day is e.g. 31 and next month has 30 days
+  const lastDayOfNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+  const targetDay = Math.min(day, lastDayOfNextMonth);
+  
+  const nextDate = new Date(nextYear, nextMonth, targetDay);
+  const padMonth = String(nextDate.getMonth() + 1).padStart(2, '0');
+  const padDay = String(nextDate.getDate()).padStart(2, '0');
+  return `${nextDate.getFullYear()}-${padMonth}-${padDay}`;
+}
+
 
 function isPaydayReached(payday) {
   const day = getPaydayDayNumber(payday);

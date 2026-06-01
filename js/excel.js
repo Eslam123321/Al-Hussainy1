@@ -19,7 +19,12 @@ function downloadCSV(filename, rows, headers) {
 }
 
 function exportPlayersToExcel() {
-  const list = getPlayers();
+  let list = getPlayers();
+  const selectedRows = document.querySelectorAll('.data-table tbody tr.table-row-selected');
+  if (selectedRows.length > 0) {
+    const selectedIds = Array.from(selectedRows).map(tr => tr.dataset.id).filter(Boolean);
+    list = list.filter(p => selectedIds.includes(p.id));
+  }
   const headers = ['الاسم بالكامل', 'رقم الهاتف', 'الفرع', 'تاريخ الميلاد', 'بداية التعاقد', 'انتهاء التعاقد', 'قيمة العقد', 'المدفوع', 'المتبقي', 'المركز'];
   const rows = list.map(p => [
     p.fullName,
@@ -37,7 +42,12 @@ function exportPlayersToExcel() {
 }
 
 function exportCoachesToExcel() {
-  const list = getCoaches();
+  let list = getCoaches();
+  const selectedRows = document.querySelectorAll('.data-table tbody tr.table-row-selected');
+  if (selectedRows.length > 0) {
+    const selectedIds = Array.from(selectedRows).map(tr => tr.dataset.id).filter(Boolean);
+    list = list.filter(c => selectedIds.includes(c.id));
+  }
   const headers = ['الاسم', 'رقم الهاتف', 'الفرع', 'بداية التعاقد', 'انتهاء التعاقد', 'الراتب', 'المدفوع', 'المتبقي'];
   const rows = list.map(c => [c.name, c.phone, c.branch || 'القاهرة', c.contractStart, c.contractEnd, c.salary, c.paid, c.remaining]);
   downloadCSV('كباتن_لشبونة', rows, headers);
@@ -65,7 +75,12 @@ function exportFinancialSummaryToExcel() {
 }
 
 function exportEmployeesToExcel() {
-  const list = getEmployees();
+  let list = getEmployees();
+  const selectedRows = document.querySelectorAll('.data-table tbody tr.table-row-selected');
+  if (selectedRows.length > 0) {
+    const selectedIds = Array.from(selectedRows).map(tr => tr.dataset.id).filter(Boolean);
+    list = list.filter(e => selectedIds.includes(e.id));
+  }
   const headers = ['الاسم', 'رقم الهاتف', 'الراتب', 'المدفوع', 'المتبقي', 'الفرع'];
   const rows = list.map(e => [e.name, e.phone, e.salary, e.paid, e.remaining, e.branch || 'القاهرة']);
   downloadCSV('موظفين_لشبونة', rows, headers);
@@ -98,4 +113,53 @@ function exportAttendanceToExcel() {
   });
   
   downloadCSV('حضور_انصراف_لشبونة', rows, headers);
+}
+
+function exportExpensesToExcel() {
+  let list = getExpenses() || [];
+  const selectedRows = document.querySelectorAll('.data-table tbody tr.table-row-selected');
+  if (selectedRows.length > 0) {
+    const selectedIds = Array.from(selectedRows).map(tr => tr.dataset.id).filter(Boolean);
+    list = list.filter(e => selectedIds.includes(e.id));
+  }
+  const headers = ['م', 'الاسم', 'المبلغ', 'المصرّح بالصرف', 'سبب أخذ المال', 'التاريخ', 'الوقت'];
+  const rows = list.map((e, idx) => {
+    const at = e.createdAt ? new Date(e.createdAt) : new Date();
+    const dateStr = at.toLocaleDateString('ar-EG');
+    const timeStr = at.toLocaleTimeString('ar-EG');
+    return [
+      idx + 1,
+      e.name,
+      e.amount,
+      e.authorizedBy,
+      e.reason,
+      dateStr,
+      timeStr
+    ];
+  });
+  downloadCSV('مصاريف_النادي', rows, headers);
+}
+
+function exportClubPaymentsToExcel() {
+  let list = getClubPayments() || [];
+  const selectedRows = document.querySelectorAll('.data-table tbody tr.table-row-selected');
+  if (selectedRows.length > 0) {
+    const selectedIds = Array.from(selectedRows).map(tr => tr.dataset.id).filter(Boolean);
+    list = list.filter(p => selectedIds.includes(p.id));
+  }
+  const headers = ['م', 'الفرع', 'اسم النادي', 'المبلغ', 'المتبقي', 'تاريخ السداد', 'تاريخ ووقت الإدخال'];
+  const rows = list.map((p, idx) => {
+    const at = p.createdAt ? new Date(p.createdAt) : new Date();
+    const dateTimeStr = at.toLocaleDateString('ar-EG') + ' ' + at.toLocaleTimeString('ar-EG');
+    return [
+      idx + 1,
+      p.branch,
+      p.clubName,
+      p.amount,
+      p.remaining,
+      p.dueDate,
+      dateTimeStr
+    ];
+  });
+  downloadCSV('موعد_سداد_الأندية_لشبونة', rows, headers);
 }

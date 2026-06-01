@@ -1067,6 +1067,32 @@ body.modal-open {
   margin: 0 8px;
   opacity: 0.4;
 }
+/* Badge Styles */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
+}
+.badge-coach {
+  background-color: rgba(13, 71, 161, 0.1);
+  color: var(--primary);
+}
+.badge-employee {
+  background-color: rgba(46, 125, 50, 0.1);
+  color: var(--success);
+}
+[data-theme="dark"] .badge-coach {
+  background-color: rgba(21, 101, 192, 0.25);
+  color: #64b5f6;
+}
+[data-theme="dark"] .badge-employee {
+  background-color: rgba(46, 125, 50, 0.25);
+  color: #81c784;
+}
+
 .branch-name {
   font-weight: 500;
   color: var(--text-muted);
@@ -1074,4 +1100,44 @@ body.modal-open {
 .branch-val {
   font-weight: 700;
   color: var(--text);
+}
+
+/* Row Selection Styles */
+.table-row-selected td {
+  background-color: rgba(255, 111, 0, 0.15) !important;
+  border-bottom-color: var(--accent) !important;
+}
+[data-theme="dark"] .table-row-selected td {
+  background-color: rgba(255, 111, 0, 0.25) !important;
+  border-bottom-color: var(--accent) !important;
+}
+
+/* Dynamic Count Box Style */
+.count-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+}
+[data-theme="dark"] .count-box {
+  background: var(--border);
+  color: var(--text);
+}
+.count-box .count-badge {
+  background: #fff;
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+[data-theme="dark"] .count-box .count-badge {
+  background: var(--primary);
+  color: #fff;
 }

@@ -111,10 +111,9 @@ function getFullyPaidEmployees() {
 }
 
 function getUpcomingPayments() {
-  const playerAlerts = getPlayerForPaymentAlert();
   const coachAlerts = getCoachPaymentAlert();
   const employeeAlerts = getEmployeePaymentAlert();
-  const combined = [...playerAlerts, ...coachAlerts, ...employeeAlerts].sort((a, b) => a.daysUntil - b.daysUntil);
+  const combined = [...coachAlerts, ...employeeAlerts].sort((a, b) => a.daysUntil - b.daysUntil);
   return combined;
 }
 

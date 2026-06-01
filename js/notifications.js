@@ -27,7 +27,9 @@ function getActionLabel(action) {
     player_delete: 'حذف لاعب',
     coach_add: 'إضافة كابتن',
     coach_edit: 'تعديل كابتن',
-    coach_delete: 'حذف كابتن'
+    coach_delete: 'حذف كابتن',
+    coach_payment_confirm: 'تأكيد صرف راتب كابتن',
+    employee_payment_confirm: 'تأكيد صرف راتب موظف'
   };
   return labels[action] || action;
 }

@@ -23,6 +23,8 @@
   let attendanceCurrentBranch = null;
   let attendanceCurrentRole = null;
   let attendanceDate = new Date().toISOString().split('T')[0];
+  let dashboardBranchFilter = 'all';
+  let playersPaymentFilter = 'all';
 
   function getRouteFromHash() {
     const hash = (location.hash || '').replace(/^#/, '');
@@ -121,8 +123,9 @@
     switch (currentRoute) {
       case ROUTES.DASHBOARD:
         contentArea.innerHTML = renderDashboard(role);
-        if (typeof renderFinancialCharts === 'function') setTimeout(renderFinancialCharts, 100);
+        if (typeof renderFinancialCharts === 'function') setTimeout(() => renderFinancialCharts(dashboardBranchFilter), 100);
         bindUpcomingPayments(); // Added this line
+        bindDashboardFilter(role);
         break;
       case ROUTES.ADD_PLAYER:
         contentArea.innerHTML = renderAddPlayerForm(role);
@@ -150,8 +153,10 @@
         break;
       case ROUTES.FINANCIAL:
         contentArea.innerHTML = renderFinancialDashboard();
-        setTimeout(renderFinancialCharts, 100);
+        if (typeof renderFinancialCharts === 'function') setTimeout(() => renderFinancialCharts(dashboardBranchFilter), 100);
         document.getElementById('export-financial')?.addEventListener('click', exportFinancialSummaryToExcel);
+        bindDashboardFilter(role);
+        bindFinancialResetActions();
         break;
       case ROUTES.UPCOMING_PAYMENTS:
         contentArea.innerHTML = renderUpcomingPayments();
@@ -186,23 +191,81 @@
   // Expose renderContent globally so real-time Firebase listeners can update the UI
   window.triggerGlobalRender = renderContent;
 
+  function renderBranchBreakdown(breakdownObj) {
+    const branches = ['القاهرة', 'الجيزة', 'سوهاج', 'الأقصر'];
+    return `
+      <div class="branch-breakdown">
+        ${branches.map(b => `
+          <span class="branch-item">
+            <span class="branch-name">${b}:</span>
+            <span class="branch-val">${(breakdownObj[b] || 0).toLocaleString('ar-SA')}</span>
+          </span>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function bindDashboardFilter(role) {
+    const filterSelect = document.getElementById('branch-dashboard-filter');
+    if (filterSelect) {
+      filterSelect.value = dashboardBranchFilter;
+      filterSelect.addEventListener('change', (e) => {
+        dashboardBranchFilter = e.target.value;
+        renderContent();
+      });
+    }
+  }
+
   function renderDashboard(role) {
     if (!canViewFinancial(role)) {
       return '<div class="card"><p>مرحباً. استخدم القائمة لإضافة لاعب أو كابتن.</p></div>';
     }
-    const sum = getFinancialSummary();
+    const sum = getFinancialSummary(dashboardBranchFilter);
     const upcoming = getUpcomingPayments().slice(0, 5);
     let html = `
       <div class="stats-grid">
-        <div class="stat-card success animate-in"><h4>إجمالي المدفوع للاعبين</h4><div class="value" data-value="${sum.totalPaidPlayers}">0</div></div>
-        <div class="stat-card warning animate-in"><h4>إجمالي المتبقي للاعبين</h4><div class="value" data-value="${sum.totalRemainingPlayers}">0</div></div>
-        <div class="stat-card animate-in"><h4>مدفوع الكباتن</h4><div class="value" data-value="${sum.totalPaidCoaches}">0</div></div>
-        <div class="stat-card animate-in"><h4>متبقي الكباتن</h4><div class="value" data-value="${sum.totalRemainingCoaches}">0</div></div>
-        <div class="stat-card animate-in"><h4>مدفوع الموظفين</h4><div class="value" data-value="${sum.totalPaidEmployees}">0</div></div>
-        <div class="stat-card animate-in"><h4>متبقي الموظفين</h4><div class="value" data-value="${sum.totalRemainingEmployees}">0</div></div>
+        <div class="stat-card success animate-in">
+          <h4>إجمالي المدفوع للاعبين</h4>
+          <div class="value" data-value="${sum.totalPaidPlayers}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalPaidPlayers)}
+        </div>
+        <div class="stat-card warning animate-in">
+          <h4>إجمالي المتبقي للاعبين</h4>
+          <div class="value" data-value="${sum.totalRemainingPlayers}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalRemainingPlayers)}
+        </div>
+        <div class="stat-card animate-in">
+          <h4>مدفوع الكباتن</h4>
+          <div class="value" data-value="${sum.totalPaidCoaches}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalPaidCoaches)}
+        </div>
+        <div class="stat-card animate-in">
+          <h4>متبقي الكباتن</h4>
+          <div class="value" data-value="${sum.totalRemainingCoaches}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalRemainingCoaches)}
+        </div>
+        <div class="stat-card animate-in">
+          <h4>مدفوع الموظفين</h4>
+          <div class="value" data-value="${sum.totalPaidEmployees}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalPaidEmployees)}
+        </div>
+        <div class="stat-card animate-in">
+          <h4>متبقي الموظفين</h4>
+          <div class="value" data-value="${sum.totalRemainingEmployees}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalRemainingEmployees)}
+        </div>
       </div>
       <div class="card">
-        <h3 class="card-title">نظرة عامة</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.75rem; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+          <h3 style="margin:0; font-size:1.15rem; font-weight:700;">نظرة عامة</h3>
+          <select id="branch-dashboard-filter" class="form-control" style="width:160px; padding:5px 10px; border-radius:6px; border:1px solid var(--border); font-family:inherit; font-size:0.9rem; background:var(--bg-card); color:var(--text); cursor:pointer;">
+            <option value="all">كل الفروع</option>
+            <option value="القاهرة">القاهرة</option>
+            <option value="الجيزة">الجيزة</option>
+            <option value="سوهاج">سوهاج</option>
+            <option value="الأقصر">الأقصر</option>
+          </select>
+        </div>
         <div class="chart-container"><canvas id="chart-pie"></canvas></div>
         <div class="chart-container"><canvas id="chart-bar"></canvas></div>
       </div>
@@ -356,8 +419,15 @@
     const canEdit = canEditPlayers(role);
     const filtered = filterPlayers(searchQ);
     const allFiltered = filtered.map(({ highlighted }) => highlighted);
-    const list = allFiltered.filter(p => p.branch === currentListBranch || (!p.branch && currentListBranch === 'القاهرة'));
+    let list = allFiltered.filter(p => p.branch === currentListBranch || (!p.branch && currentListBranch === 'القاهرة'));
     const canExport = canViewFinancial(role);
+
+    // Apply financial filter (cash / installment)
+    if (playersPaymentFilter === 'cash') {
+      list = list.filter(p => (Number(p.remaining) || 0) <= 0);
+    } else if (playersPaymentFilter === 'installment') {
+      list = list.filter(p => (Number(p.remaining) || 0) > 0);
+    }
 
     let html = `<div class="branch-tabs" style="display:flex; gap:10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
       <button type="button" class="btn ${currentListBranch === 'القاهرة' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="القاهرة">القاهرة</button>
@@ -366,10 +436,18 @@
       <button type="button" class="btn ${currentListBranch === 'الأقصر' ? 'btn-primary' : 'btn-outline'} btn-branch-tab" data-branch="الأقصر">الأقصر</button>
     </div>`;
 
-    html += '<div class="export-bar">';
+    html += '<div class="export-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:1.5rem;">';
+    html += '<div style="display:flex; gap:8px;">';
     html += `<button type="button" class="btn btn-primary btn-sm" id="print-players">طباعة</button>`;
     if (canExport) html += `<button type="button" class="btn btn-primary btn-sm" id="export-players">تصدير Excel</button>`;
     html += '</div>';
+    html += '<div style="display:flex; gap:8px;">';
+    html += `<button type="button" class="btn btn-sm ${playersPaymentFilter === 'all' ? 'btn-primary' : 'btn-outline'} btn-payment-filter" data-filter="all">الكل</button>`;
+    html += `<button type="button" class="btn btn-sm ${playersPaymentFilter === 'cash' ? 'btn-primary' : 'btn-outline'} btn-payment-filter" data-filter="cash">كاش</button>`;
+    html += `<button type="button" class="btn btn-sm ${playersPaymentFilter === 'installment' ? 'btn-primary' : 'btn-outline'} btn-payment-filter" data-filter="installment">قسط</button>`;
+    html += '</div>';
+    html += '</div>';
+
     html += `<div class="card printable-content"><h3 class="card-title">قائمة اللاعبين - فرع ${currentListBranch}</h3><div class="table-wrap"><table class="data-table"><thead><tr>
       <th>الاسم</th><th>الهاتف</th><th>تاريخ الميلاد</th><th>بداية التعاقد</th><th>انتهاء التعاقد</th><th>قيمة العقد</th><th>المدفوع</th><th>المتبقي</th><th>المركز</th>
       ${canEdit ? '<th>إجراءات</th>' : ''}
@@ -391,6 +469,13 @@
     document.querySelectorAll('.btn-branch-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         currentListBranch = btn.dataset.branch;
+        renderContent();
+      });
+    });
+
+    document.querySelectorAll('.btn-payment-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playersPaymentFilter = btn.dataset.filter;
         renderContent();
       });
     });
@@ -801,42 +886,217 @@
     modal.querySelector('.btn-cancel-edit').addEventListener('click', () => closeModal(modal));
   }
 
+  function bindFinancialResetActions() {
+    document.querySelectorAll('.btn-reset-coach-payment').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const coaches = getCoaches();
+        const c = coaches.find(x => x.id === id);
+        if (!c) return;
+        if (confirm(`هل أنت متأكد من ترحيل الكابتن ${c.name} لموعد القبض القادم؟ سيتم تصفير المبلغ المدفوع له.`)) {
+          c.paid = 0;
+          c.remaining = c.salary;
+          
+          // Clear confirmation state for this month
+          const confs = getPaydayConfirmations();
+          const key = getPaydayKey(id);
+          if (confs[key]) {
+            delete confs[key];
+            setPaydayConfirmations(confs);
+          }
+          
+          setCoaches(coaches);
+          renderContent();
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-reset-employee-payment').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const employees = getEmployees();
+        const e = employees.find(x => x.id === id);
+        if (!e) return;
+        if (confirm(`هل أنت متأكد من ترحيل الموظف ${e.name} لموعد القبض القادم؟ سيتم تصفير المبلغ المدفوع له.`)) {
+          e.paid = 0;
+          e.remaining = e.salary;
+          
+          // Clear confirmation state for this month
+          const confs = getPaydayConfirmations();
+          const key = getPaydayKey(id);
+          if (confs[key]) {
+            delete confs[key];
+            setPaydayConfirmations(confs);
+          }
+          
+          setEmployees(employees);
+          renderContent();
+        }
+      });
+    });
+  }
+
   function renderFinancialDashboard() {
-    const sum = getFinancialSummary();
-    const fullyPaidPlayers = getFullyPaidPlayers();
-    const pendingPlayers = getPendingPaymentsPlayers();
-    const fullyPaidCoaches = getFullyPaidCoaches();
-    const fullyPaidEmployees = getFullyPaidEmployees();
+    const sum = getFinancialSummary(dashboardBranchFilter);
+    
+    const activeBranch = dashboardBranchFilter;
+    const filterByBranch = (item) => {
+      if (!activeBranch || activeBranch === 'all') return true;
+      return (item.branch || 'القاهرة') === activeBranch;
+    };
+
+    const fullyPaidPlayers = getFullyPaidPlayers().filter(filterByBranch);
+    const fullyPaidCoaches = getFullyPaidCoaches().filter(filterByBranch);
+    const fullyPaidEmployees = getFullyPaidEmployees().filter(filterByBranch);
+
+    const sortedPaidPlayers = [...fullyPaidPlayers].sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'ar'));
+    const sortedPaidCoaches = [...fullyPaidCoaches].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+    const sortedPaidEmployees = [...fullyPaidEmployees].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+
     let html = `
       <div class="export-bar"><button type="button" class="btn btn-primary btn-sm" id="export-financial">تصدير ملخص مالي</button></div>
       <div class="stats-grid">
-        <div class="stat-card success"><h4>إجمالي المدفوع للاعبين</h4><div class="value" data-value="${sum.totalPaidPlayers}">0</div></div>
-        <div class="stat-card warning"><h4>إجمالي المتبقي للاعبين</h4><div class="value" data-value="${sum.totalRemainingPlayers}">0</div></div>
-        <div class="stat-card"><h4>إجمالي المدفوع للكباتن</h4><div class="value" data-value="${sum.totalPaidCoaches}">0</div></div>
-        <div class="stat-card"><h4>إجمالي المتبقي للكباتن</h4><div class="value" data-value="${sum.totalRemainingCoaches}">0</div></div>
-        <div class="stat-card"><h4>إجمالي المدفوع للموظفين</h4><div class="value" data-value="${sum.totalPaidEmployees}">0</div></div>
-        <div class="stat-card"><h4>إجمالي المتبقي للموظفين</h4><div class="value" data-value="${sum.totalRemainingEmployees}">0</div></div>
+        <div class="stat-card success">
+          <h4>إجمالي المدفوع للاعبين</h4>
+          <div class="value" data-value="${sum.totalPaidPlayers}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalPaidPlayers)}
+        </div>
+        <div class="stat-card warning">
+          <h4>إجمالي المتبقي للاعبين</h4>
+          <div class="value" data-value="${sum.totalRemainingPlayers}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalRemainingPlayers)}
+        </div>
+        <div class="stat-card">
+          <h4>إجمالي المدفوع للكباتن</h4>
+          <div class="value" data-value="${sum.totalPaidCoaches}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalPaidCoaches)}
+        </div>
+        <div class="stat-card">
+          <h4>إجمالي المتبقي للكباتن</h4>
+          <div class="value" data-value="${sum.totalRemainingCoaches}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalRemainingCoaches)}
+        </div>
+        <div class="stat-card">
+          <h4>إجمالي المدفوع للموظفين</h4>
+          <div class="value" data-value="${sum.totalPaidEmployees}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalPaidEmployees)}
+        </div>
+        <div class="stat-card">
+          <h4>إجمالي المتبقي للموظفين</h4>
+          <div class="value" data-value="${sum.totalRemainingEmployees}">0</div>
+          ${renderBranchBreakdown(sum.breakdown.totalRemainingEmployees)}
+        </div>
       </div>
       <div class="card">
-        <h3 class="card-title">نظرة عامة</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.75rem; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+          <h3 style="margin:0; font-size:1.15rem; font-weight:700;">نظرة عامة</h3>
+          <select id="branch-dashboard-filter" class="form-control" style="width:160px; padding:5px 10px; border-radius:6px; border:1px solid var(--border); font-family:inherit; font-size:0.9rem; background:var(--bg-card); color:var(--text); cursor:pointer;">
+            <option value="all">كل الفروع</option>
+            <option value="القاهرة">القاهرة</option>
+            <option value="الجيزة">الجيزة</option>
+            <option value="سوهاج">سوهاج</option>
+            <option value="الأقصر">الأقصر</option>
+          </select>
+        </div>
         <div class="chart-container"><canvas id="chart-pie"></canvas></div>
         <div class="chart-container"><canvas id="chart-bar"></canvas></div>
       </div>
       <div class="card">
         <h3 class="card-title">لاعبون مكتمل دفعهم</h3>
-        ${fullyPaidPlayers.length ? '<ul>' + fullyPaidPlayers.map(p => `<li>${escapeHtml(p.fullName)} — ${p.contractValue}</li>`).join('') + '</ul>' : '<p class="empty-state">لا يوجد</p>'}
+        ${fullyPaidPlayers.length ? `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>الهاتف</th>
+                  <th>الفرع</th>
+                  <th>المركز</th>
+                  <th>قيمة العقد</th>
+                  <th>المدفوع</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sortedPaidPlayers.map(p => `
+                  <tr>
+                    <td>${escapeHtml(p.fullName || '—')}</td>
+                    <td>${escapeHtml(p.phone || '—')}</td>
+                    <td>${escapeHtml(p.branch || 'القاهرة')}</td>
+                    <td>${getPositionLabel(p.position)}</td>
+                    <td>${p.contractValue}</td>
+                    <td>${p.paid}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : '<p class="empty-state">لا يوجد</p>'}
       </div>
       <div class="card">
         <h3 class="card-title">كباتن مكتمل دفعهم</h3>
-        ${fullyPaidCoaches.length ? '<ul>' + fullyPaidCoaches.map(c => `<li>${escapeHtml(c.name)} — ${c.salary}</li>`).join('') + '</ul>' : '<p class="empty-state">لا يوجد</p>'}
+        ${fullyPaidCoaches.length ? `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>الهاتف</th>
+                  <th>الفرع</th>
+                  <th>الراتب</th>
+                  <th>يوم القبض</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sortedPaidCoaches.map(c => `
+                  <tr>
+                    <td>${escapeHtml(c.name || '—')}</td>
+                    <td>${escapeHtml(c.phone || '—')}</td>
+                    <td>${escapeHtml(c.branch || 'القاهرة')}</td>
+                    <td>${c.salary}</td>
+                    <td>كل ${getPaydayDayNumber(c.payday)} من الشهر</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-success btn-reset-coach-payment" data-id="${c.id}" title="ترحيل لموعد القبض القادم">✔️</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : '<p class="empty-state">لا يوجد</p>'}
       </div>
       <div class="card">
         <h3 class="card-title">موظفون مكتمل دفعهم</h3>
-        ${fullyPaidEmployees.length ? '<ul>' + fullyPaidEmployees.map(e => `<li>${escapeHtml(e.name)} — ${e.salary}</li>`).join('') + '</ul>' : '<p class="empty-state">لا يوجد</p>'}
-      </div>
-      <div class="card">
-        <h3 class="card-title">مدفوعات معلقة (لاعبين)</h3>
-        ${pendingPlayers.length ? '<ul>' + pendingPlayers.map(p => `<li>${escapeHtml(p.fullName)} — متبقي: ${p.remaining}</li>`).join('') + '</ul>' : '<p class="empty-state">لا يوجد</p>'}
+        ${fullyPaidEmployees.length ? `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>الهاتف</th>
+                  <th>الفرع</th>
+                  <th>الراتب</th>
+                  <th>يوم القبض</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sortedPaidEmployees.map(e => `
+                  <tr>
+                    <td>${escapeHtml(e.name || '—')}</td>
+                    <td>${escapeHtml(e.phone || '—')}</td>
+                    <td>${escapeHtml(e.branch || 'القاهرة')}</td>
+                    <td>${e.salary}</td>
+                    <td>كل ${getPaydayDayNumber(e.payday)} من الشهر</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-success btn-reset-employee-payment" data-id="${e.id}" title="ترحيل لموعد القبض القادم">✔️</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : '<p class="empty-state">لا يوجد</p>'}
       </div>
     `;
     setTimeout(() => {

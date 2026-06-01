@@ -1042,3 +1042,36 @@ body.modal-open {
   border-color: #1e3a5f !important;
   border-top-color: #4f8ef7 !important;
 }
+
+/* ===== Branch Breakdown inside Stat Cards ===== */
+.branch-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 0;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  width: 100%;
+}
+.branch-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.branch-item:not(:last-child)::after {
+  content: "•";
+  margin: 0 8px;
+  opacity: 0.4;
+}
+.branch-name {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.branch-val {
+  font-weight: 700;
+  color: var(--text);
+}

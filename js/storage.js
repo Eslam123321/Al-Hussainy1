@@ -48,7 +48,10 @@ function _loadCollection(name) {
       
       // Re-render UI magically when data changes remotely or after initial empty cache load
       if (!isFirstLoad && typeof window.triggerGlobalRender === 'function') {
-        window.triggerGlobalRender();
+        if (window._globalRenderTimeout) clearTimeout(window._globalRenderTimeout);
+        window._globalRenderTimeout = setTimeout(() => {
+          window.triggerGlobalRender();
+        }, 50);
       }
       
       if (isFirstLoad) {

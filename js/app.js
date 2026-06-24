@@ -62,6 +62,7 @@
       showAccessDenied();
       return;
     }
+    if (currentRoute === route) return;
     currentRoute = route;
     try { location.hash = route; } catch (e) {}
     if (pageTitle) pageTitle.textContent = ROUTE_LABELS[route] || route;
@@ -355,7 +356,16 @@
       addPlayer(data);
       form.reset();
       updateRemaining();
-      if (canAccess(ROUTES.PLAYERS_LIST)) navigateTo(ROUTES.PLAYERS_LIST);
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = 'تمت الإضافة بنجاح!';
+        btn.style.backgroundColor = '#2e7d32';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.backgroundColor = '';
+        }, 2000);
+      }
     });
   }
 
@@ -421,7 +431,16 @@
       addCoach(data);
       form.reset();
       updateRemaining();
-      if (canAccess(ROUTES.COACHES_LIST)) navigateTo(ROUTES.COACHES_LIST);
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = 'تمت الإضافة بنجاح!';
+        btn.style.backgroundColor = '#2e7d32';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.backgroundColor = '';
+        }, 2000);
+      }
     });
   }
 
@@ -815,7 +834,16 @@
       addEmployee(data);
       form.reset();
       updateRemaining();
-      if (canAccess(ROUTES.EMPLOYEES_LIST)) navigateTo(ROUTES.EMPLOYEES_LIST);
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = 'تمت الإضافة بنجاح!';
+        btn.style.backgroundColor = '#2e7d32';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.backgroundColor = '';
+        }, 2000);
+      }
     });
   }
 
@@ -2126,8 +2154,12 @@
     applyTheme(theme);
   });
 
+  let searchTimeout;
   globalSearch.addEventListener('input', () => {
-    renderContent();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      renderContent();
+    }, 250);
   });
 
   const globalPrintBtn = document.getElementById('global-print');

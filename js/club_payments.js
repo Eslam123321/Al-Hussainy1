@@ -18,6 +18,7 @@ function addClubPayment(data) {
   const list = getClubPayments();
   list.push(payment);
   setClubPayments(list);
+  dbUpsert('club_payments', payment);
   
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();

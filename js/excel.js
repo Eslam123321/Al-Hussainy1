@@ -5,6 +5,10 @@ function downloadCSV(filename, rows, headers) {
   const BOM = '\uFEFF';
   const escape = (v) => {
     const s = String(v == null ? '' : v);
+    // Prevent Excel from converting long numbers, phone numbers, or dates automatically
+    if (/^\d{10,}$/.test(s) || /^0\d+/.test(s) || /^\d{4}-\d{2}-\d{2}/.test(s)) {
+      return `="${s}"`;
+    }
     if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
     return s;
   };

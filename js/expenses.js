@@ -17,6 +17,7 @@ function addExpense(data) {
   const list = getExpenses();
   list.push(expense);
   setExpenses(list);
+  dbUpsert('expenses', expense);
   
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();

@@ -65,48 +65,20 @@ function _loadCollection(name) {
   });
 }
 
-/**
- * Overwrite an entire Firestore collection with the given array.
- * Uses batched writes (max 500 ops). Each item's `id` becomes the doc ID.
- */
-/**
- * Synchronize a local array with a Firestore collection safely.
- * Logic: Upsert all items in the array. 
- * Optional: Delete remote items NOT in the local array (standard sync).
- */
 async function _syncCollection(name, arr, deleteOrphans = true) {
+  console.warn(`_syncCollection called for ${name}. This massive sync is deprecated for performance reasons.`);
+}
+
+async function dbUpsert(collection, doc) {
   try {
-    const colRef = _firestoreDB.collection(name);
-    const CHUNK = 400; // Safe batch size
+    await _firestoreDB.collection(collection).doc(String(doc.id || doc._id)).set(_sanitize(doc), { merge: true });
+  } catch (e) { console.error('Firestore upsert error:', e); }
+}
 
-    // 1. Upsert all items from local array
-    for (let i = 0; i < arr.length; i += CHUNK) {
-      const batch = _firestoreDB.batch();
-      arr.slice(i, i + CHUNK).forEach((item, idx) => {
-        const docId = String(item.id || item._id || (name + '_' + (i + idx)));
-        batch.set(colRef.doc(docId), _sanitize(item), { merge: true });
-      });
-      await batch.commit();
-    }
-
-    // 2. [Optional] Delete orphan documents from Firestore
-    // For 'users' collection, we NEVER delete orphans automatically for safety.
-    if (deleteOrphans && name !== 'users') {
-      const snap = await colRef.get();
-      const localIds = new Set(arr.map(item => String(item.id || item._id)));
-      
-      const toDelete = snap.docs.filter(doc => !localIds.has(doc.id));
-      if (toDelete.length > 0) {
-        for (let i = 0; i < toDelete.length; i += CHUNK) {
-          const batch = _firestoreDB.batch();
-          toDelete.slice(i, i + CHUNK).forEach(doc => batch.delete(doc.ref));
-          await batch.commit();
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Firestore sync error [' + name + ']:', e);
-  }
+async function dbDelete(collection, docId) {
+  try {
+    await _firestoreDB.collection(collection).doc(String(docId)).delete();
+  } catch (e) { console.error('Firestore delete error:', e); }
 }
 
 // ===== Database initialization (call once at app start) =====
@@ -181,7 +153,6 @@ function getPlayers() { return _cache.players; }
 
 function setPlayers(arr) {
   _cache.players = arr;
-  _syncCollection('players', arr);
 }
 
 // ===== Coaches =====
@@ -190,7 +161,6 @@ function getCoaches() { return _cache.coaches; }
 
 function setCoaches(arr) {
   _cache.coaches = arr;
-  _syncCollection('coaches', arr);
 }
 
 // ===== Employees =====
@@ -199,7 +169,6 @@ function getEmployees() { return _cache.employees; }
 
 function setEmployees(arr) {
   _cache.employees = arr;
-  _syncCollection('employees', arr);
 }
 
 // ===== Users =====
@@ -208,7 +177,6 @@ function getUsers() { return _cache.users; }
 
 function setUsers(arr) {
   _cache.users = arr;
-  _syncCollection('users', arr);
 }
 
 // ===== Notifications =====
@@ -217,7 +185,6 @@ function getNotifications() { return _cache.notifications; }
 
 function setNotifications(arr) {
   _cache.notifications = arr;
-  _syncCollection('notifications', arr);
 }
 
 // ===== Attendance =====
@@ -226,7 +193,6 @@ function getAttendanceRecords() { return _cache.attendance_records; }
 
 function setAttendanceRecords(arr) {
   _cache.attendance_records = arr;
-  _syncCollection('attendance_records', arr, false);
 }
 
 // ===== Expenses =====
@@ -235,7 +201,6 @@ function getExpenses() { return _cache.expenses || []; }
 
 function setExpenses(arr) {
   _cache.expenses = arr;
-  _syncCollection('expenses', arr);
 }
 
 // ===== Club Payments =====
@@ -244,13 +209,13 @@ function getClubPayments() { return _cache.club_payments || []; }
 
 function setClubPayments(arr) {
   _cache.club_payments = arr;
-  _syncCollection('club_payments', arr);
 }
 
 function addAttendanceRecord(record) {
   const list = getAttendanceRecords();
   list.push(record);
   setAttendanceRecords(list);
+  dbUpsert('attendance_records', record);
 }
 
 // ===== Session (localStorage — per device) =====

@@ -12,6 +12,7 @@ function logNotification(action, email, meta = {}) {
   };
   list.unshift(entry);
   setNotifications(list.slice(0, 500));
+  dbUpsert('notifications', entry);
 }
 
 function getActionLabel(action) {

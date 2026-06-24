@@ -677,12 +677,18 @@
     
     if (hasSelection) {
       bodyClass = 'class="has-selection"';
-      extraStyle = `
+      extraStyle += `
         body.has-selection tbody tr:not(.table-row-selected) {
           display: none !important;
         }
       `;
     }
+    
+    extraStyle += `
+      .export-bar, .branch-tabs, button, .btn, .count-box { display: none !important; }
+      /* Hide column if it contains action buttons */
+      th:last-child:has(button), td:last-child:has(button) { display: none !important; }
+    `;
     
     printWindow.document.write(`<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>نادي لشبونة</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet"><style>body{font-family:Tajawal,sans-serif;padding:20px;direction:rtl;} table{width:100%;border-collapse:collapse;} th,td{text-align:right;padding:8px;border:1px solid #ddd;} ${extraStyle}</style></head><body ${bodyClass}>` + area.innerHTML + '</body></html>');
     printWindow.document.close();

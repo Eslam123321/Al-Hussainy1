@@ -29,6 +29,7 @@ function addCoach(data) {
   const list = getCoaches();
   list.unshift(coach);
   setCoaches(list);
+  dbUpsert('coaches', coach);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('coach_add', user && user.email, { coachId: coach.id, name: coach.name });
@@ -56,6 +57,7 @@ function updateCoach(id, data) {
     remaining: Math.max(0, salary - paid)
   };
   setCoaches(list);
+  dbUpsert('coaches', list[idx]);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('coach_edit', user && user.email, { coachId: id, name: list[idx].name });
@@ -70,6 +72,7 @@ function deleteCoach(id) {
   const name = list[idx].name;
   list.splice(idx, 1);
   setCoaches(list);
+  dbDelete('coaches', id);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('coach_delete', user && user.email, { coachId: id, name });

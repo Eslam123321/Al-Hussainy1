@@ -30,6 +30,7 @@ function addPlayer(data) {
   const list = getPlayers();
   list.unshift(player);
   setPlayers(list);
+  dbUpsert('players', player);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('player_add', user && user.email, { playerId: player.id, name: player.fullName });
@@ -58,6 +59,7 @@ function updatePlayer(id, data) {
     position: data.position || prev.position
   };
   setPlayers(list);
+  dbUpsert('players', list[idx]);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('player_edit', user && user.email, { playerId: id, name: list[idx].fullName });
@@ -72,6 +74,7 @@ function deletePlayer(id) {
   const name = list[idx].fullName;
   list.splice(idx, 1);
   setPlayers(list);
+  dbDelete('players', id);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('player_delete', user && user.email, { playerId: id, name });

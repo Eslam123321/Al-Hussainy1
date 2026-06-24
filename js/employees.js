@@ -27,6 +27,7 @@ function addEmployee(data) {
   const list = getEmployees();
   list.unshift(employee);
   setEmployees(list);
+  dbUpsert('employees', employee);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('employee_add', user && user.email, { employeeId: employee.id, name: employee.name });
@@ -52,6 +53,7 @@ function updateEmployee(id, data) {
     remaining: Math.max(0, salary - paid)
   };
   setEmployees(list);
+  dbUpsert('employees', list[idx]);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('employee_edit', user && user.email, { employeeId: id, name: list[idx].name });
@@ -66,6 +68,7 @@ function deleteEmployee(id) {
   const name = list[idx].name;
   list.splice(idx, 1);
   setEmployees(list);
+  dbDelete('employees', id);
   if (typeof logNotification === 'function') {
     const user = getCurrentUser();
     logNotification('employee_delete', user && user.email, { employeeId: id, name });
